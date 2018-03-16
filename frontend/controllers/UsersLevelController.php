@@ -43,7 +43,39 @@ class UsersLevelController extends Controller
             'dataProvider' => $dataProvider,
         ]);
     }
+    public function actionImport()
+    {
+        $model = new \common\models\Upload();
+        $data = "";
+        $count = 0;
+        $result = 0;
+        if ($model->load(Yii::$app->request->post())) {
 
+          $file = \yii\web\UploadedFile::getInstance($model, 'file');
+            $data = \common\components\Excel::import($file->tempName, ['setFirstRecordAsKeys' => true]);
+
+            foreach ($data as $entry) {
+                 try {
+                    $userslevel = new \common\models\UsersLevel();
+                    $userslevel->validate();
+                    $userslevel->sr = $entry['id'] ;
+                    $userslevel->name = $entry['name'] ;
+                    $userslevel->display_name = $entry['display_name'] ;
+                    $userslevel->parent_id = ''.$entry['parent_id'] ;
+                    $userslevel->max_user = ''.$entry['max_user'] ;
+                    $userslevel->save();
+                 }
+                       catch (\Exception $e) {
+                           var_dump($userslevel->getErrors());
+                           exit();
+                     continue;
+                 }
+            }
+        }
+        return $this->render('user_upload', [
+            'model' => $model,
+        ]);
+    }
     /**
      * Displays a single UsersLevel model.
      * @param integer $id
@@ -66,7 +98,10 @@ class UsersLevelController extends Controller
     {
         $model = new UsersLevel();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        if ($model->load(Yii::$app->request->post())) {
+            $parent_id = UsersLevel::findOne(['id'=>$model->parent_id]);
+            $model->parent_id =  $parent_id->sr;
+            $model->save();
             return $this->redirect(['view', 'id' => $model->id]);
         }
 

@@ -43,7 +43,35 @@ class PostcodeController extends Controller
             'dataProvider' => $dataProvider,
         ]);
     }
+    public function actionImport()
+    {
+        $model = new \common\models\Upload();
+        $data = "";
+        $count = 0;
+        $result = 0;
+        if ($model->load(Yii::$app->request->post())) {
 
+          $file = \yii\web\UploadedFile::getInstance($model, 'file');
+            $data = \common\components\Excel::import($file->tempName, ['setFirstRecordAsKeys' => true]);
+
+            foreach ($data as $entry) {
+                 try {
+                    $postal_code = new \common\models\Postcode();
+                    $postal_code->validate();
+                    $postal_code->province = $entry['province'] ;
+                    $postal_code->district = $entry['district'] ;
+                    $postal_code->zip = ''.$entry['zip'] ;
+                    $postal_code->save();
+                 }
+                       catch (\Exception $e) {
+                     continue;
+                 }
+            }
+        }
+        return $this->render('user_upload', [
+            'model' => $model,
+        ]);
+    }
     /**
      * Displays a single Postcode model.
      * @param integer $id

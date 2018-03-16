@@ -3,7 +3,7 @@
 namespace common\models\helpers;
 
 use Yii;
-use yii\db\Query;
+use common\components\Query;
 
 class Statistics extends \yii\base\Model
 {

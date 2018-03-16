@@ -19,6 +19,10 @@ class Lookup
         '1' => 'Receivable',
         '2' => 'Payable',
     ];
+    public static $pricing_level = [
+        '0' => 'Role Based Pricing',
+        '1' => 'Quantity Based Pricing',
+    ];
     public static $status = [
         '0' => "Pending",
         '1' => "Approved",
@@ -50,21 +54,10 @@ class Lookup
     ];
     public static $user_levels = [
         '1' => 'Super Admin',
-        '1000' => 'Management Team',
-        '2000' => 'Management Team Inter Level',
-        '3000' => 'Management Team Pro Level',
-        '4000' => 'Management Team Advance Level',
-        '5000' => 'Management Team Begin Level',
-        '6000' => 'Super Vip Team',
-        '7000' => 'Super Vip Team Inter Level',
-        '8000' => 'Super Vip Team Pro Level',
-        '9000' => 'Super Vip Team Advance Level',
-        '10000' => 'Super Vip Team Begin Level',
-        '11000' => 'VIP Team',
-        '12000' => 'VIP Team Inter Level',
-        '13000' => 'VIP Team Pro Level',
-        '14000' => 'VIP Team Advance Level',
-        '15000' => 'VIP Team Begin Level',
+        '1000' => 'Admin Team',
+        '2000' => 'Sales Team',
+        '3000' => 'Staff Team',
+       
 
     ];
     public static $next_levels = [

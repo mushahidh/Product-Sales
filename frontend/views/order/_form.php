@@ -58,6 +58,7 @@ if (!Yii::$app->user->isGuest) {
             <?php $form = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data']]); ?>
                     <?php if (!Yii::$app->user->isGuest) { ?>  
                         <div class="row">
+                   
                             <div class="<?=$class;?> order-settings">
                                 <?=
                                         Yii::$app->controller->renderPartial('_order_setting', [
@@ -123,6 +124,8 @@ if (!Yii::$app->user->isGuest) {
                             </div>
                         </div>
                     </div>
+                 
+                 
             <?php ActiveForm::end(); ?>
         </div>
 <?php if (!Yii::$app->user->isGuest) { ?>     
@@ -130,7 +133,15 @@ if (!Yii::$app->user->isGuest) {
 </section>
 <?php } ?>
 <script type="text/javascript">
+
+<?php if(!$model->isNewRecord){
+           $model::producOrderGridUpdate($model->id);
+                          
+                        } ?>
+       
+       
     jQuery(document).ready(function() {
+
         var type = '<?= $type ?>';
         <?php
         if(!empty($referral_user))
@@ -140,18 +151,19 @@ if (!Yii::$app->user->isGuest) {
         <?php  
         }
         ?>
-        if(type=="Return")
-        {
-            $('#order-child_user').on('change', function () {
-                GetUserStock($(this).val());
+            $('#order-product_id').on('change', function () {
+                if(type=="Return"){
+                    GetUserStock($('#order-child_user').val());
+                }else{
+                    if($('#order-parent_user').val()){
+                        GetUserStock($('#order-parent_user').val());
+                    }else{
+                        GetUserStock($('#order-request_agent_name').val());
+                    }
+                }
+               
          });
-        }
-        else
-        {
-            $('#order-request_agent_name,#order-parent_user').on('change', function () {
-                GetUserStock($(this).val());
-         });
-        }
+        
         
          $('#order-postal_code').on('change', function () {
                 var data = $('#order-postal_code').select2('data');
@@ -163,18 +175,19 @@ if (!Yii::$app->user->isGuest) {
          });
         
         //this code is to hidden the grid and show for order and request if user login
-        $('#order-quantity').on('blur', function () {
+        $('#add-button').on('click', function () {
             var url="<?=Yii::$app->homeUrl?>user-product-level/getunitsprice?id=" + $('#order-quantity').val() + "&user_level=" + (typeof($('#order-child_level').val())  === "undefined"?$('#order-all_level').val():$('#order-child_level').val()) + "&product_id=" + $('#order-product_id').val();
-            
             if (type == "Request" || type == "Transfer"){
                 url+="&type="+type;
             $.post(url, function (data) {
                 var json = $.parseJSON(data);
                     if (json.price){
-                    $(".noproduct").hide();
-                    $('#order-single_price').val(json.price);
-                    $('#order-total_price').val(parseFloat($('#order-quantity').val()) * parseFloat(json.price));
-                } else{
+                        already_in_table = false;
+                        checkSameProductOrder(json);
+            if(already_in_table==false){
+                      loadjsGrid(json);
+                    }
+              } else{
                     $(".noproduct").show();
                     $(".noproduct").html("<h5 style='text-align:center;color:red;'>You cannot purchase less than  " + json.units + " Units</h5>");
                     $('#order-quantity').val('');
@@ -183,7 +196,7 @@ if (!Yii::$app->user->isGuest) {
         } else{
                 if(type!="Return")
                 {
-                    url="<?=Yii::$app->homeUrl?>product/get-product?id=1";    
+                    url="<?=Yii::$app->homeUrl?>product/get-product?id=" + $('#order-product_id').val();    
                 }
                 else
                 {
@@ -195,16 +208,30 @@ if (!Yii::$app->user->isGuest) {
                         if ($('#order-quantity').val()){
                             if(type=="Return")
                             {
-                                 data = $.parseJSON(data);
+                               
+                                json = $.parseJSON(data);
+                                $(".noproduct").hide();
+                            already_in_table = false;
+                            checkSameProductOrder(json);
+            if(already_in_table==false){
+                loadjsGrid(json);
                             }
+                            }else{
+                                json = data;
                             $(".noproduct").hide();
-                            $('#order-single_price').val(data.price);
-                            $('#order-total_price').val($('#order-quantity').val() * data.price);
-                        } else{
+                            already_in_table = false;
+                            checkSameProductOrder(json);
+            if(already_in_table==false){
+                      loadjsGridcustomer(json);
+                            }
+                           
+                    }
+                      } else{
                         $(".noproduct").show();
                             $(".noproduct").html("<h5 style='text-align:center;color:red;'>The value can not empty and must be less than stock.</h5>");
                         }
                     } else{
+                       
                         $(".noproduct").show();
                         $(".noproduct").html("<h5 style='text-align:center;color:red;'>Out of Stock </h5>");
                         $('#order-quantity').val('');
@@ -213,8 +240,12 @@ if (!Yii::$app->user->isGuest) {
                 else
                 {
                 ?>
-                    $('#order-single_price').val(data.price);
-                    $('#order-total_price').val($('#order-quantity').val() * data.price);
+                json = data;
+                             already_in_table = false;
+                             checkSameProductOrder(json);
+                             if(already_in_table==false){
+                                 loadjsGridcustomer(json);
+                                     }
                 <?php
                 }
                 ?>
@@ -231,7 +262,7 @@ if (!Yii::$app->user->isGuest) {
             $('.order-setting-panel').show();
             $('.order-settings').show();
         }
-        else if (role == 'general' || role=='seller')
+        else if (role == 'Admin' || role=='Staff'  || role == 'Sales')
         {
             $('.admin').hide();
             $('.agent').show();
@@ -246,6 +277,37 @@ if (!Yii::$app->user->isGuest) {
        <?php } ?>
 
     });
+    function checkSameProductOrder(json){
+        
+        for (var i = 0; i < window.db_items.clients.length; i++) {
+              if(window.db_items.clients[i].product == json.pname){
+              
+                     return already_in_table = true;
+                  }
+            }
+    }
+    function loadjsGridcustomer(json){
+        db_items.clients.push({
+                           unit: $('#order-quantity').val(),
+                           price: json.price,
+                           product: json.name,
+                           product_id: json.id,
+                           total_price: parseFloat($('#order-quantity').val()) * parseFloat(json.price),
+                       });
+                       console.log(db_items.clients);
+            $("#items_all").jsGrid("loadData");
+    }
+    function loadjsGrid(json){
+        db_items.clients.push({
+                           unit: $('#order-quantity').val(),
+                           price: json.price,
+                           product: json.pname,
+                           product_id: json.pid,
+                           total_price: parseFloat($('#order-quantity').val()) * parseFloat(json.price),
+                       });
+                       console.log(db_items.clients);
+            $("#items_all").jsGrid("loadData");
+    }
     function TypeChange(role)
         {
             var value = "<?= $type ?>";

@@ -15,21 +15,42 @@ namespace common\components;
  */
 class Constants {
 
-    public static function nextSr($db, $entity, $app, $branch = NULL) {
-        if ($branch) {
-            $q = "select * from " . $entity . " where application_ID='" . $app . "' and branch_ID='" . $branch . "' order by sr DESC";
-        } else {
-            $q = "select * from " . $entity . " where application_ID='" . $app . "' order by sr DESC";
-        }
-        $command = $db->createCommand($q);
-        $id = $command->queryOne();
-
-        if ($id) {
-            return $id['sr'] + 1;
-        } else {
-            return 1;
-        }
-    }
+    public static function nextSrOrder($db,$entity,$app){
+        
+              $command = $db->createCommand("select * from `$entity` where company_id='".$app."' order by sr DESC");
+       
+          $id = $command->queryOne();
+        
+          if($id){
+              return $id['sr']+1;
+          }else{
+              return 1;
+          }
+      }
+      public static function nextSr($db,$entity,$app){
+        
+              $command = $db->createCommand("select * from $entity where company_id='".$app."' order by sr DESC");
+       
+          $id = $command->queryOne();
+        
+          if($id){
+              return $id['sr']+1;
+          }else{
+              return 1;
+          }
+      }
+      public static function nextSrCompany($db,$entity,$app){
+        
+              $command = $db->createCommand("select * from $entity where id='".$app."' order by sr DESC");
+       
+          $id = $command->queryOne();
+        
+          if($id){
+              return $id['sr']+1;
+          }else{
+              return 1;
+          }
+      }
 
     public static function nextSrGroup($db, $entity, $app, $branch = NULL, $group, $student) {
         if ($branch) {

@@ -34,8 +34,9 @@ class ProductOrder extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['order_id'], 'required'],
-            [['order_id', 'product_id', 'quantity', 'requested_quantity'], 'integer'],
+            [['order_id','id','sr','company_id', 'branch_id'], 'required'],
+            [['order_id', 'product_id'], 'safe'],
+            [[ 'quantity', 'requested_quantity'], 'integer'],
             [['order_price', 'requested_price'], 'number'],
             [['order_id'], 'exist', 'skipOnError' => true, 'targetClass' => Order::className(), 'targetAttribute' => ['order_id' => 'id']],
         ];
@@ -55,7 +56,22 @@ class ProductOrder extends \yii\db\ActiveRecord
             'requested_price' => Yii::t('app', 'Requested Price'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'update' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\ProductOrder::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -71,38 +87,35 @@ class ProductOrder extends \yii\db\ActiveRecord
     {
         return $this->hasMany(StockOut::className(), ['product_order_id' => 'id']);
     }
-    public static function insert_order($model)
+    public static function insert_order($model,$order_id)
     {
+    
         $order_data = json_decode($model->product_order_info);
         foreach ($order_data->order_info as $single_order) {
             $product_order = new ProductOrder();
-            $product_order->isNewRecord = true;
-            $product_order->id = null;
-            $product_order->order_id = $model->id;
-            $product_order->product_id = $model->product_id;
+            $product_order->beforeValidate();
+            $product_order->order_id = $order_id;
+            $product_order->product_id = $single_order->product_id;
             $product_order->quantity = $single_order->unit;
             $product_order->order_price = $single_order->price;
             $product_order->requested_price = $single_order->price;
             $product_order->requested_quantity = $single_order->unit;
-            $product_order->save();
-
+            return $product_order->save();
         }
     }
 
-    public static function insertProductOrder($quantity, $unit_price, $order)
+    public static function insertProductOrder($usermodel, $unit_price, $order)
     {
         $product_order = new ProductOrder();
-        $product_order->isNewRecord = true;
-        $product_order->id = null;
+        $product_order->beforeValidate();
         $product_order->order_id = $order->id;
-        $product_order->product_id = '1';
-        $product_order->quantity = $quantity;
+        $product_order->product_id = $usermodel->product_id;
+        $product_order->quantity = $usermodel->quantity;
         $product_order->order_price = $unit_price;
         $product_order->requested_price = $unit_price;
-        $product_order->requested_quantity = $quantity;
+        $product_order->requested_quantity = $usermodel->quantity;
         $product_order->save();
-      
-
+     
     }
     public static function updateProductOrder($model)
     {
@@ -129,7 +142,8 @@ class ProductOrder extends \yii\db\ActiveRecord
         $productOrderrDetail = ProductOrder::findOne(['order_id'=>$model->id]);
         $model->quantity = $productOrderrDetail->quantity;
         $model->single_price = $productOrderrDetail->order_price;
-        $model->total_price = $productOrderrDetail->order_price * $model->quantity;
+        $model->product_id = $productOrderrDetail->product_id;
+       $model->total_price = $productOrderrDetail->order_price * $model->quantity;
         return $model;
         
     }

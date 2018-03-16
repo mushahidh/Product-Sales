@@ -6,7 +6,7 @@ use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\Expression;
-use yii\db\Query;
+use common\components\Query;
 
 /**
  * This is the model class for table "gl".
@@ -61,11 +61,9 @@ class Gl extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['created_by', 'updated_by', 'payment_detail_id', 'order_id', 'account_id'], 'integer'],
-            [['payment_detail_id', 'account_id', 'hit_account_id'], 'required'],
+            [[ 'account_id', 'hit_account_id','id','sr','company_id', 'branch_id'], 'required'],
             [['amount'], 'string', 'max' => 45],
-            [['created_at', 'updated_at', 'receivable_user', 'payable_user', 'payment_slip'], 'safe'],
-
+            [['created_at', 'updated_at','created_by', 'updated_by', 'receivable_user','payment_detail_id', 'payable_user', 'payment_slip'], 'safe'],
             [['account_id'], 'exist', 'skipOnError' => true, 'targetClass' => Account::className(), 'targetAttribute' => ['account_id' => 'id']],
             [['order_id'], 'exist', 'skipOnError' => true, 'targetClass' => Order::className(), 'targetAttribute' => ['order_id' => 'id']],
             [['payment_detail_id'], 'exist', 'skipOnError' => true, 'targetClass' => PaymentDetail::className(), 'targetAttribute' => ['payment_detail_id' => 'id']],
@@ -89,7 +87,22 @@ class Gl extends \yii\db\ActiveRecord
             'account_id' => Yii::t('app', 'Account ID'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'approve' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Gl::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -129,11 +142,10 @@ class Gl extends \yii\db\ActiveRecord
            
             $receivable_account = \common\models\Account::findOne(['user_id' => $user_id, 'account_type' => 1]);
             $payable_account = \common\models\Account::findOne(['user_id' => $requester_id, 'account_type' => 2]);
-           // if (!empty($receivable_account) && !empty($payable_account)) {
+            // if (!empty($receivable_account) && !empty($payable_account)) {
                 for ($i = 0; $i < 2; $i++) {
                     $gl = new Gl();
-                    $gl->isNewRecord = true;
-                    $gl->id = null;
+                    $gl->beforeValidate();
                     $gl->amount = '' . $amount;
                     $gl->order_id = $order_id;
                     if ($i == 0) {
@@ -209,4 +221,5 @@ class Gl extends \yii\db\ActiveRecord
         $gl = $gl->all();
         return (int) $gl[0]['amount'];
     }
+
 }

@@ -34,9 +34,9 @@ class StockOut extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['quantity', 'stock_in_id', 'product_order_id'], 'integer'],
+            [['quantity'], 'integer'],
             [['timestamp'], 'safe'],
-            [['stock_in_id', 'product_order_id'], 'required'],
+            [['stock_in_id', 'product_order_id','id','sr','company_id', 'branch_id'], 'required'],
             [['product_order_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductOrder::className(), 'targetAttribute' => ['product_order_id' => 'id']],
             [['stock_in_id'], 'exist', 'skipOnError' => true, 'targetClass' => StockIn::className(), 'targetAttribute' => ['stock_in_id' => 'id']],
         ];
@@ -55,7 +55,22 @@ class StockOut extends \yii\db\ActiveRecord
             'product_order_id' => Yii::t('app', 'Product Order ID'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'approve' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\StockOut::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -74,14 +89,12 @@ class StockOut extends \yii\db\ActiveRecord
     public static function insert_quantity($product_order_id,$stock_in_id,$quantity){
        
          $stockOut = new StockOut();
-         $stockOut->isNewRecord = true;
-         $stockOut->id = null;
+         $stockOut->beforeValidate();
          $stockOut->product_order_id = $product_order_id;
          $stockOut->timestamp = new Expression('NOW()');
          $stockOut->stock_in_id = $stock_in_id;
          $stockOut->quantity = $quantity;
-         
-     return  $stockOut->save();
+          return  $stockOut->save();
      
         
     }

@@ -122,11 +122,11 @@ $this->params['breadcrumbs'][] = $this->title;
             'template' => '{view}{edit}{delete}',
             'buttons' => [
                 'view' => function ($url, $model) {
-                    return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl . 'order/view/' . $model->id);
+                    return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl . 'order/view?id=' . $model->id);
                 },
                 'edit' => function ($url, $model) {
                     if ($model->status == array_search('Return Request', \common\models\Lookup::$status) && $model->created_by == Yii::$app->user->identity->id) {
-                        return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl . 'order/update/' . $model->id);
+                        return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl . 'order/update?id=' . $model->id);
                     }
                 },
 

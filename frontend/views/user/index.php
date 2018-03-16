@@ -79,13 +79,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'template' => '{view}{edit}',
             'buttons' => [
                 'view' => function ($url, $model) {
-                    return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl . 'user/view/' . $model->id);
+                    return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl . 'user/view?id=' . $model->id);
                 },
                 'edit' => function ($url, $model) {
                     $user_id = Yii::$app->user->getId();
                     $Role = Yii::$app->authManager->getRolesByUser($user_id);
                     if (isset($Role['super_admin'])) {
-                        return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl . 'user/update/' . $model->id);
+                        return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl . 'user/update?id=' . $model->id);
                     }
                 },
             ],

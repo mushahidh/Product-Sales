@@ -107,14 +107,14 @@ use kartik\time\TimePicker;
                           'dataType' => 'json',
                           'data' => new \yii\web\JsExpression('function(params) {  
                             var user_level = $("#order-all_level").val();
-                            var current_user_level_id='.Yii::$app->user->identity->user_level_id.';
+                            var current_user_level_id= "'.Yii::$app->user->identity->user_level_id.' ";
                             if(current_user_level_id>user_level)
                             {
-                                var parent_id = '.Yii::$app->user->identity->parent_id.';
+                                var parent_id = "'.Yii::$app->user->identity->parent_id.'";
                             }
                             else
                             {
-                                var parent_id = '.Yii::$app->user->identity->id.';
+                                var parent_id = "'.Yii::$app->user->identity->id.'";
                             }
                             return {q:params.term,user_level:user_level,parent_id:parent_id,include_parent:true}; }')
                       ],

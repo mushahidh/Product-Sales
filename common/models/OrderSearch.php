@@ -41,10 +41,10 @@ class OrderSearch extends Order
      */
     public function search($params)
     {
-        $query = Order::find()->alias('o');
+        $query = Order::find()->alias('order');
         $query->joinWith(['user as u']);
-        $query->innerJoin('shipping_address', 'shipping_address.order_id = o.id');
-        $query->select('o.*,shipping_address.name');
+        $query->innerJoin('shipping_address', 'shipping_address.order_id = order.id');
+        $query->select('order.*,shipping_address.name');
         // add conditions that should always apply here
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

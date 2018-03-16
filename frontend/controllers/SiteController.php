@@ -74,6 +74,7 @@ class SiteController extends Controller
             $this->redirect('login');
         }
         $user_id = Yii::$app->user->getId();
+      
         $all_status = \common\models\helpers\Statistics::allStatusDashboard($user_id);
         return $this->render('index', [
             'all_status' => $all_status,
@@ -94,6 +95,10 @@ class SiteController extends Controller
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+          
+            Yii::$app->session['company_id'] = Yii::$app->user->identity->company_id;
+            Yii::$app->session['branch_id'] = Yii::$app->user->identity->branch_id;
+        
             return $this->goBack();
         } else {
             return $this->render('login', [
@@ -159,7 +164,7 @@ class SiteController extends Controller
         if ($model->load(Yii::$app->request->post())) {
             if ($user = $model->signup($model)) {
                 $auth = \Yii::$app->authManager;
-                $role = $auth->getRole('customer');
+                $role = $auth->getRole('super_admin');
                 $auth->assign($role, $user->id);
                 if (Yii::$app->getUser()->login($user)) {
                     return $this->goHome();

@@ -39,7 +39,6 @@ $Role = Yii::$app->authManager->getRolesByUser($user_id);
                 </div>
                 <div class="col-md-8">
                 <?=$form->field($model, 'first_name')->textInput(['maxlength' => true, 'required' => true])->label(false)?>
-                <?php echo $form->field($model, 'product_id')->hiddenInput(['value' => '1'])->label(false); ?>
             </div>
         </div>
 
@@ -233,7 +232,7 @@ echo $form->field($model, 'user_level_id')->widget(Select2::classname(), [
         </div>
     </div>
     <div class="col-md-6">
-
+ 
     </div>
 </div>
 
@@ -385,14 +384,44 @@ echo $form->field($model, 'status')->widget(Select2::classname(), [
     </div>
 
     </div>
-<div class="row no-margin">
-    <div class="col-md-12">
-        <div class="col-md-4"><?php echo $form->field($model, 'quantity')->label('Quantity')->textInput(['maxlength' => true, 'required' => true]); ?></div>
-        <div class="col-md-4"><?php echo $form->field($model, 'unit_price')->label('Unit Price')->textInput(['readonly' => true]); ?></div>
-        <div class="col-md-4"><?php echo $form->field($model, 'total_price')->label('Total')->textInput(['readonly' => true]); ?></div>
-        <div class="noproduct"></div>
-    </div>
+    <div class="row">
+
+    <h3>Order Items</h3>
+    <div class="row no-margin">
+    
+<div class="col-md-5">
+<?php
+echo $form->field($model, 'product_id')->widget(Select2::classname(), [
+    'data' => common\models\Product::getallproduct(),
+    'theme' => Select2::THEME_BOOTSTRAP,
+    'options' => ['placeholder' => 'Select Product  ...'],
+    //'initValueText' => isset($model->customerUser->customer_name) ? $model->customerUser->company_name : "",
+    'theme' => Select2::THEME_BOOTSTRAP,
+    'pluginOptions' => [
+    'allowClear' => true,
+    ],
+]);
+?>
 </div>
+<div class="col-md-5">
+<?php echo $form->field($model, 'quantity')->textInput(['maxlength' => true]); ?>
+</div>
+<div class="col-md-2">
+<label class="control-label" for="order-quantity" style="visibility:hidden;width: 100%">Item</label>
+    <button class=" btn btn-brand-primary add-button" id="add-button" type="button"><span class="loading-next-btn"></span>add item</button>
+    </div>
+    </div>
+
+<input type="hidden" id="order-hidden" class="form-control" name="User[product_order_info]" maxlength="45"  aria-invalid="true">
+
+<div class="row no-margin">
+    <div id="items_all"></div>
+    <div class="noproduct"></div>
+    <div class="vehcle_not_found" style="color: #a94442;"></div>
+
+</div>        
+
+</div>  
     <?php }?>
 
 </div>
@@ -406,11 +435,18 @@ echo $form->field($model, 'status')->widget(Select2::classname(), [
         </div>
     </div>
 </div>
+
     <?php ActiveForm::end();?>
 </div>
 </section>
 <script>
+ <?php 
+if(isset($model->product_order_info)){
+    \common\models\Order::producOrderGrid($model->product_order_info);
+        }
+?>
 jQuery(document).ready(function() {
+ 
     $('#user-company_user').change(function(){
     if($('#user-company_user').is(':checked')){
         $("#user-all_level").select2('val', 'All');
@@ -431,17 +467,29 @@ jQuery(document).ready(function() {
         $("#user-district").val(district);
         $("#user-province").val(province);
     });
-$('#user-quantity').on('blur', function () {
+$('#add-button').on('click', function () {
         $(".noproduct").hide();
-    var product_id = '1';
+        var product_id = $('#user-product_id').val();
         $.post("../user-product-level/getunitsprice?id=" + $('#user-quantity').val()+"&user_level="+$('#user-user_level_id').val()+"&product_id="+product_id+"&type=null&check_units="+false, function (data) {
-
         var json = $.parseJSON(data);
         if($('#user-quantity').val()  * parseFloat(json.price) > 0){
-            $(".noproduct").hide();
-                       $('#user-unit_price').val(json.price);
-                       $('#user-total_price').val(parseFloat($('#user-quantity').val())  * parseFloat(json.price));
-
+            already_in_table = false;
+            for (var i = 0; i < window.db_items.clients.length; i++) {
+              if(window.db_items.clients[i].product == json.pname){
+                      already_in_table = true;
+                  }
+            }
+            if(already_in_table==false){
+                        db_items.clients.push({
+                           unit: $('#user-quantity').val(),
+                           price: json.price,
+                           product: json.pname,
+                           product_id: json.pid,
+                           total_price: parseFloat($('#user-quantity').val()) * parseFloat(json.price),
+                       });
+                       console.log(db_items.clients);
+            $("#items_all").jsGrid("loadData");
+                    }
         }else{
             $('#user-quantity').val(''); 
             $(".noproduct").show();
@@ -453,10 +501,9 @@ $('#user-quantity').on('blur', function () {
 
 });
 
-    $('#user-parent_user').on('change', function () {
-
-        var product_id = '1';
-        $.post("../stock-in/getunits?id="+product_id+"&user_id="+$(this).val(), function (data) {
+    $('#user-product_id').on('change', function () {
+        var product_id = $('#user-product_id').val();
+        $.post("../stock-in/getunits?id="+product_id+"&user_id="+$('#user-parent_user').val(), function (data) {
     $('#order-orde').val(data);
         });
     });

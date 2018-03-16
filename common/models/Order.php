@@ -105,7 +105,7 @@ class Order extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'status', 'order_request_id', 'quantity', 'all_level', 'parent_user', 'child_user', 'child_level', 'request_user_level', 'rquest_customer', 'customer_id', 'quantity'], 'integer'],
+            [['user_id', 'status', 'order_request_id', 'quantity', 'all_level', 'parent_user', 'child_user', 'child_level', 'request_user_level', 'rquest_customer', 'customer_id', 'quantity','id','sr','company_id', 'branch_id'], 'safe'],
             [['requested_date', 'order_type', 'request_agent_name', 'product_order_info', 'created_at', 'updated_at', 'created_by', 'updated_by', 'address', 'city', 'country', 'postal_code', 'district', 'province', 'mobile_no', 'phone_no', 'email', 'product_id', 'total_price', 'single_price', 'payment_method', 'total_stock', 'shipping_address_id', 'order_external_code', 'order_tracking_code', 'order_external_code', 'order_tracking_code'], 'safe'],
             [['payment_slip'], 'file'],
             [['order_ref_no', 'shipper', 'cod', 'additional_requirements'], 'string', 'max' => 45],
@@ -149,14 +149,22 @@ class Order extends \yii\db\ActiveRecord
     {
         $action = Yii::$app->controller->action->id;
         if (parent::beforeValidate()) {
+            
             if ($action == 'create') {
                 $ref_no = (Order::find()->max('id')) + 1;
                 $this->order_ref_no = '' . $ref_no;
                 $this->requested_date = date('Y-m-d');
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                 $this->sr = \common\components\Constants::nextSrOrder(Yii::$app->db, \common\models\Order::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
             }
             return true;
         }
     }
+ 
 
     /**
      * @return \yii\db\ActiveQuery
@@ -269,7 +277,7 @@ class Order extends \yii\db\ActiveRecord
             //     $model->status = $orderStatus;
             // }
             if ($model->save()) {
-                $product_order = \common\models\ProductOrder::insertProductOrder($model->quantity, $model->single_price, $model);
+                $product_order = \common\models\ProductOrder::insert_order($model,$model->id);
                 $shipping_address = \common\models\ShippingAddress::insertShippingAddress($model, $model->id);
                 $transaction->commit();
                 $result = "transaction_complete";
@@ -298,6 +306,37 @@ class Order extends \yii\db\ActiveRecord
 
         return $model->save();
     }
+    public static function producOrderGrid($productOrderDetail){
+        $object_script = "db_items.clients = [];";
+        $order_data = json_decode($productOrderDetail);
+            foreach ($order_data->order_info as $single_order) {
+                $productName = \common\models\Product::findOne(['id'=>$single_order->product_id]);
+                                           $object_script .= 'InsertObj ={unit: "' . $single_order->unit . '"
+                                               ,price: "' . $single_order->price. '"
+                                               ,product: "' . $productName->name. '"
+                                               ,product_id: "' . $single_order->product_id. '"
+                                               ,total_price: "' . $single_order->price * $single_order->unit . '"
+                                           };';
+                                             $object_script.='db_items.clients.push(InsertObj);console.log(InsertObj);';
+      echo $object_script;
+            }
+    }
+    public static function producOrderGridUpdate($id){
+        $object_script = "db_items.clients = [];";
+        $prodectOrderDetail = \common\models\ProductOrder::find()->where(['order_id'=>$id])->all();
+        foreach($prodectOrderDetail as $prodectOrder){
+            $productName = \common\models\Product::findOne(['id'=>$prodectOrder->product_id]);
+            $object_script .= 'InsertObj ={unit: "' . $prodectOrder->quantity . '"
+                ,price: "' . $prodectOrder->order_price. '"
+                ,product: "' . $productName->name. '"
+                ,product_id: "' . $prodectOrder->product_id. '"
+                ,total_price: "' . $prodectOrder->order_price * $prodectOrder->quantity . '"
+            };';
+              $object_script.='db_items.clients.push(InsertObj);console.log(InsertObj);';
+echo $object_script;
+
+        }
+    }
     public static function updateBeforeLoad($model)
     {
         // shipping detail for order
@@ -305,7 +344,8 @@ class Order extends \yii\db\ActiveRecord
         // Order type and dropdown values for setting customer and agent
         $model = \common\models\User::RequestedUserDetail($model);
         // Product detail for price and quantity
-        $model = \common\models\ProductOrder::productOrderDetail($model);
+    
+       
         // check status of order
         $orderReturn = array_search('Return Request', \common\models\Lookup::$status);
         $orderTransfer = array_search('Transfer Request', \common\models\Lookup::$status);
@@ -324,9 +364,9 @@ class Order extends \yii\db\ActiveRecord
     }
     public static function insertOrder($user_model, $approve_order = false, $is_bonus = false, $validate = true, $for_customer_creation = false)
     {
+       
         $order = new Order();
-        $order->isNewRecord = true;
-        $order->id = null;
+         $order->beforeValidate();
         $order->user_id = $user_model->id;
         if (!$is_bonus) {
             $order->order_request_id = $user_model->parent_id;
@@ -339,13 +379,12 @@ class Order extends \yii\db\ActiveRecord
             $bonus_status = array_search('Bonus', \common\models\Lookup::$status);
             $order->status = $bonus_status;
         }
-        $order->save($validate);
+      $order->save($validate);
         if ($order->id) {
-
-            $product_order = \common\models\ProductOrder::insertProductOrder($user_model->quantity, $user_model->unit_price, $order);
-
+            $product_order = \common\models\ProductOrder::insert_order($user_model, $order->id);
             $shipping_address = \common\models\ShippingAddress::insertShippingAddress($user_model, $order->id, $for_customer_creation);
             if ($approve_order) {
+             
                 $stock_in = \common\models\StockIn::approve($order->id, $user_model->id, $user_model->parent_id);
             }
         }
@@ -369,7 +408,7 @@ class Order extends \yii\db\ActiveRecord
             $status = $request_cancel;
         }
         Yii::$app->db->createCommand()
-            ->update('order', ['status' => $status], 'id =' . $order_id)
+            ->update('order', ['status' => $status], "id ='" . $order_id."'")
             ->execute();
         return true;
     }
@@ -377,24 +416,31 @@ class Order extends \yii\db\ActiveRecord
     public static function update_status($id)
     {
         return Yii::$app->db->createCommand()
-            ->update('order', ['status' => '1'], 'id =' . $id)
+            ->update('order', ['status' => '1'], "id ='" . $id."'")
             ->execute();
     }
 
     public static function update_return_status($id)
     {
         return Yii::$app->db->createCommand()
-            ->update('order', ['status' => '4'], 'id =' . $id)
+            ->update('order', ['status' => '4'], "id ='" . $id."'")
             ->execute();
     }
 
     public static function update_transfer_status($id)
     {
         return Yii::$app->db->createCommand()
-            ->update('order', ['status' => '6'], 'id =' . $id)
+            ->update('order', ['status' => '6'], "id ='" . $id."'")
             ->execute();
     }
-
+    public static function find()
+    {
+        return new Addfindcondition(get_called_class());
+    }
+//   public static function find()
+//     {
+//         return parent::find()->where(['=', 'company_id',Yii::$app->session['company_id']])->andWhere(['=','branch_id',Yii::$app->session['branch_id']]);
+//     }  
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -407,10 +453,11 @@ class Order extends \yii\db\ActiveRecord
     {
         $i = 1;
         $product_order_data = "";
-        $order = \common\models\ProductOrder::find()->where(['=', 'order_id', $id])->all();
+        $Productorder = \common\models\ProductOrder::find()->where(['=', 'order_id', $id])->all();
 
-        foreach ($order as $p_order) {
-            $product_order_data .= '<div class="vehicle_grid"> ' . $i . '&nbsp;&nbsp;Quantity' . $p_order->quantity . '&nbsp;&nbsp;Price/Unit#' . $p_order->order_price . '<br></div>';
+        foreach ($Productorder as $p_order) {
+            $prodectDtail = \common\models\product::findOne(['id'=>$p_order->product_id]);
+            $product_order_data .= '<div class="vehicle_grid"> ' . $i . '&nbsp;&nbsp;Quantity' . $p_order->quantity . '&nbsp;&nbsp;Price/Unit#' . $p_order->order_price . '&nbsp;&nbsp;Product:' . $prodectDtail->name.'<br></div>';
             $i++;
         }
         return $product_order_data;
@@ -424,9 +471,9 @@ class Order extends \yii\db\ActiveRecord
                 $this->addError('payment_slip', 'Payment slip is required.');
             }
         }
-        if (empty($this->quantity)) {
-            $this->addError('quantity', 'Quanity must be greater than 0.');
-        }
+        // if (empty($this->quantity)) {
+        //     $this->addError('quantity', 'Quanity must be greater than 0.');
+        // }
         // Customer Order Validations
         if ($this->order_type == "Order") {
             $this->OrderTypeValidation($Role);

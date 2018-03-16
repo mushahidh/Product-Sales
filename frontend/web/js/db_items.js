@@ -20,7 +20,9 @@
             if ($('.dynamic-field-final-3').val()) {
                 insertingClient.FundBranch = $('.dynamic-field-final-3').val();
             }
-
+            if ($('.dynamic-field-final-4').val()) {
+                insertingClient.FundBranch = $('.dynamic-field-final-4').val();
+            }
 
 
             console.log(insertingClient);
@@ -28,20 +30,25 @@
             this.clients.push(insertingClient);
         },
         updateItem: function(updatingClient) {
-            if ($('.dynamic-field-final-1').val()) {
-                updatingClient.DebitAccount = $('.dynamic-field-final-1').val();
+            if ($('#user-user_level_id').val() == null && $('#order-request_agent_name').val() == null) {
+                var url = "../user-product-level/getunitsprice?id=" + updatingClient.unit + "&user_level=" + (typeof($('#order-child_level').val()) === "undefined" ? $('#order-all_level').val() : $('#order-child_level').val()) + "&product_id=" + updatingClient.product_id;
+            } else if ($('#order-request_agent_name').val() == null) {
+                var url = "../user-product-level/getunitsprice?id=" + updatingClient.unit + "&user_level=" + $('#user-user_level_id').val() + "&product_id=" + updatingClient.product_id;
+            } else {
+                url = "../product/get-product?id=" + $('#order-product_id').val();
             }
-            if ($('.dynamic-field-final-2').val()) {
-                updatingClient.Department = $('.dynamic-field-final-2').val();
-                console.log(updatingClient.Department);
-            }
-            if ($('.dynamic-field-final-3').val()) {
-                updatingClient.FundBranch = $('.dynamic-field-final-3').val();
-            }
-
-
-
-
+            $.post(url, function(data) {
+                if ($('#order-request_agent_name').val()) {
+                    var json = data;
+                } else {
+                    var json = $.parseJSON(data);
+                }
+                if (json.price) {
+                    updatingClient.price = json.price;
+                    updatingClient.total_price = "" + parseFloat(updatingClient.unit) * parseFloat(json.price);
+                    $("#items_all").jsGrid("loadData");
+                }
+            });
         },
         deleteItem: function(deletingClient) {
             var clientIndex = $.inArray(deletingClient, this.clients);

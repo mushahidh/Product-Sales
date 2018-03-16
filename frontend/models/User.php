@@ -40,7 +40,7 @@ class User extends \yii\db\ActiveRecord
     {
         return [
             [['status', 'created_at', 'updated_at', 'parent_id', 'user_level_id'], 'integer'],
-            [['created_at', 'updated_at'], 'required'],
+            [['created_at', 'updated_at','id','sr','company_id', 'branch_id'], 'required'],
             [['username', 'password_hash', 'password_reset_token', 'email'], 'string', 'max' => 255],
             [['auth_key'], 'string', 'max' => 32],
             [['link'], 'string', 'max' => 450],

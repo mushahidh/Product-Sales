@@ -54,7 +54,8 @@ class Image extends \yii\db\ActiveRecord
            $images->isNewRecord = true;
            $images->id = null;
           $images->name= $photo->name;
-          $ext = end((explode(".", $photo->name)));
+          $array = explode(".", $photo->name);
+          $ext=end($array);
           $images->name = Yii::$app->security->generateRandomString() . ".{$ext}";
           $path = Yii::getAlias('@app') . '/web/uploads/' . $images->name;
       

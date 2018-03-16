@@ -28,7 +28,7 @@ class Postcode extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['province', 'district', 'zip'], 'required'],
+            [['province', 'district', 'zip','id','sr','company_id', 'branch_id'], 'required'],
             [['province', 'district', 'zip'], 'string', 'max' => 255],
         ];
     }
@@ -58,5 +58,20 @@ class Postcode extends \yii\db\ActiveRecord
         $out['results'] = array_values($data);
         return $out;
        
+    }
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'import' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Postcode::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+            }
+            return true;
+        }
     }
 }

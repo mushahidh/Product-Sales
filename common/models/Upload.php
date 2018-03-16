@@ -25,6 +25,7 @@ class Upload extends \common\components\db\ActiveRecord
     use \common\models\base\BaseFilter;
     public static $BEFORE_QUERY = [];
     public $file;
+    public $product_id;
     public $uiMessage;
     public $templateUri;
     public function setUiMessage($message){
@@ -42,7 +43,8 @@ class Upload extends \common\components\db\ActiveRecord
         //'extensions' => 'jpg,jpeg,doc,xls,xlsx,docx,doc,txt,csv,zip'
         //gif|jpe?g|png|doc|xls|xlsx|docx|txt|csv
         return [
-           [['file'],'required']
+           [['file'],'required'],
+           [['product_id'],'safe']
         ];
     }
 }

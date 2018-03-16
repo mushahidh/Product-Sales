@@ -34,12 +34,12 @@ class StockIn extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['price','initial_quantity'], 'required'],
+            [['price','initial_quantity','id','sr','company_id', 'branch_id'], 'required'],
             [['timestamp'], 'safe'],
-            [['initial_quantity', 'remaining_quantity', 'product_id', 'user_id'], 'integer'],
+            [['initial_quantity', 'remaining_quantity'], 'integer'],
             [['price'], 'number'],
             [['product_id', 'user_id'], 'required'],
-            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::className(), 'targetAttribute' => ['product_id' => 'id']],
+             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::className(), 'targetAttribute' => ['product_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
@@ -57,6 +57,22 @@ class StockIn extends \yii\db\ActiveRecord
             'product_id' => Yii::t('app', 'Product ID'),
             'user_id' => Yii::t('app', 'User ID'),
         ];
+    }
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'approve' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\StockIn::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+              
+            }
+            return true;
+        }
     }
     /**
      * @return \yii\db\ActiveQuery
@@ -181,21 +197,24 @@ class StockIn extends \yii\db\ActiveRecord
     public static function approve($order_id, $user_id, $order_request_id)
     {
         $data = Yii::$app->request->post();
-
         $stock_available = true;
         $total_order_quantity = \common\models\ProductOrder::order_quantity($order_id);
+       
         $order_detail = \common\models\Order::findOne(['id' => $order_id]);
         $shipping_detail = \common\models\ShippingAddress::findOne(['order_id' => $order_id]);
         $transaction_failed = false;
         $transaction = Yii::$app->db->beginTransaction();
         try
         {
+           
             foreach ($total_order_quantity as $single_order) {
                 $total_quantity = $single_order['quantity'];
                 if ($transaction_failed) {
                     break;
                 }
+              
                 while ($single_order['quantity'] > 0) {
+                   
                     $stockin_quantity = \common\models\StockIn::avilaible_quantity($single_order['product_id'], $order_request_id);
                     if ($stockin_quantity != null) {
                         //  subtract the quantiy
@@ -203,6 +222,7 @@ class StockIn extends \yii\db\ActiveRecord
                         // insert stock out and update stock in
                         if ($single_order['quantity'] > 0) {
                             \common\models\StockIn::update_quantity($stockin_quantity['id'], 0);
+                           
                             \common\models\StockOut::insert_quantity($single_order['id'], $stockin_quantity['id'], $stockin_quantity['remaining_quantity']);
                             \common\models\StockIn::insert_quantity($single_order['product_id'], $single_order['order_price'], abs($single_order['quantity']), $user_id);
                         } else {
@@ -219,7 +239,8 @@ class StockIn extends \yii\db\ActiveRecord
                     }
 
                 }
-                \common\models\StockIn::CalculateBonus($order_request_id, $user_id, $order_id, $total_quantity);
+            //   bonus cmmented out in product sales
+                // \common\models\StockIn::CalculateBonus($order_request_id, $user_id, $order_id, $total_quantity);
                 $Role = Yii::$app->authManager->getRolesByUser($user_id);
 
                 if (!$transaction_failed && isset($Role['customer'])) {
@@ -240,10 +261,10 @@ class StockIn extends \yii\db\ActiveRecord
             $transaction_failed = true;
         }
         if ($transaction_failed) {
+        
             $transaction->rollBack();
             return false;
         } else {
-           
             $total_amount = array_sum(array_map(create_function('$o', 'return $o["total_price"];'), $total_order_quantity));
             \common\models\Gl::create_gl($total_amount, $order_request_id, $user_id, $order_id, '1');
             \common\models\Order::update_status($order_id);
@@ -254,9 +275,9 @@ class StockIn extends \yii\db\ActiveRecord
     }
     public static function CreateStock($model)
     {
+       
         $model->remaining_quantity = $model->initial_quantity;
         $model->user_id = Yii::$app->user->identity->id;
-        $model->product_id = '1';
         if ($model->save()) {
             return true;
         } else {
@@ -315,27 +336,26 @@ class StockIn extends \yii\db\ActiveRecord
         else
         {
             $MRComission = ($quantity * $MR_Comission) / 1;
-            \common\models\Gl::create_gl(strval($MRComission), $user_id, 1, $order_id, '1');
+            \common\models\Gl::create_gl(strval($MRComission), $user_id, '6691BCEE-EFAF-4862-8C4D-8FC510B7547E', $order_id, '1');
         }
         $Super_Vip_Level_Id = array_search('Super Vip Team', \common\models\Lookup::$user_levels);
         $Super_VIP_Comission = 5;
         $Super_VIP = \common\models\User::find()->where(['user_level_id' => $Super_Vip_Level_Id])->andWhere(['id' => $order_request_id])->one();
         if (!empty($Super_VIP)) {
-            \common\models\Gl::create_gl(strval(($quantity * $Super_VIP_Comission)), $Super_VIP->id, 1, $order_id, '1');
+            \common\models\Gl::create_gl(strval(($quantity * $Super_VIP_Comission)), $Super_VIP->id, '6691BCEE-EFAF-4862-8C4D-8FC510B7547E', $order_id, '1');
         }
         $VIP_Level_Id = array_search('VIP Team', \common\models\Lookup::$user_levels);
         $VIP_Comission = 3;
         $VIP = \common\models\User::find()->where(['user_level_id' => $VIP_Level_Id])->andWhere(['id' => $order_request_id])->one();
         if (!empty($VIP)) {
-            \common\models\Gl::create_gl(strval(($quantity * $VIP_Comission)), $VIP->id, 1, $order_id, '1');
+            \common\models\Gl::create_gl(strval(($quantity * $VIP_Comission)), $VIP->id, '6691BCEE-EFAF-4862-8C4D-8FC510B7547E', $order_id, '1');
         }
 
     }
     public static function insert_quantity($product_id, $price, $quantity, $user_id)
     {
         $stockIn = new StockIn();
-        $stockIn->isNewRecord = true;
-        $stockIn->id = null;
+       $stockIn->beforeValidate();
         $stockIn->initial_quantity = $quantity;
         $stockIn->remaining_quantity = $quantity;
         $stockIn->price = $price;
@@ -346,7 +366,7 @@ class StockIn extends \yii\db\ActiveRecord
     public static function update_quantity($id, $amount)
     {
         return Yii::$app->db->createCommand()
-            ->update('stock_in', ['remaining_quantity' => $amount], 'id =' . $id)
+            ->update('stock_in', ['remaining_quantity' => $amount], "id ='" . $id."'")
             ->execute();
     }
     public static function avilaible_quantity($product_id, $request_user_id)

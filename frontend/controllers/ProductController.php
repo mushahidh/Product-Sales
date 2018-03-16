@@ -131,5 +131,8 @@ class ProductController extends Controller {
        return  Product::findOne($id);
     }
 
+public function actionTotalStock($id,$user_id){
+return  $totalProductStock = Product::totalStock($id,$user_id);
 
+}
 }

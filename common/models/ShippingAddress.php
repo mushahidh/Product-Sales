@@ -35,8 +35,7 @@ class ShippingAddress extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['order_id'], 'required'],
-            [['order_id'], 'integer'],
+            [['order_id','id','sr','company_id', 'branch_id'], 'required'],
             [['email', 'phone_no', 'mobile_no', 'postal_code', 'district', 'province', 'country', 'name'], 'string', 'max' => 100],
             [['order_id'], 'exist', 'skipOnError' => true, 'targetClass' => Order::className(), 'targetAttribute' => ['order_id' => 'id']],
         ];
@@ -59,7 +58,22 @@ class ShippingAddress extends \yii\db\ActiveRecord
             'country' => Yii::t('app', 'Country'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'import' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\ShippingAddress::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -70,8 +84,7 @@ class ShippingAddress extends \yii\db\ActiveRecord
     public static function insertShippingAddress($model, $order_id, $for_user_creation = false)
     {
         $shipping_address = new ShippingAddress();
-        $shipping_address->isNewRecord = true;
-        $shipping_address->id = null;
+        $shipping_address->beforeValidate();
         $shipping_address->order_id = $order_id;
         // $shipping_address->email = $model->email;
         $shipping_address->phone_no = $model->phone_no;

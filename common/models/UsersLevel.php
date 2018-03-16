@@ -1,7 +1,7 @@
 <?php
 
 namespace common\models;
-
+use yii\helpers\ArrayHelper;
 use Yii;
 
 /**
@@ -28,7 +28,8 @@ class UsersLevel extends \yii\db\ActiveRecord {
      */
     public function rules() {
         return [
-            [['parent_id', 'max_user'], 'integer'],
+            [['id','sr','company_id', 'branch_id','parent_id'], 'required'],
+            [[ 'max_user'], 'integer'],
             [['name','display_name'], 'string', 'max' => 450],
         ];
     }
@@ -57,6 +58,15 @@ class UsersLevel extends \yii\db\ActiveRecord {
        $value = (count($data) == 0) ? ['' => ''] : \yii\helpers\ArrayHelper::map($data, 'id', 'dsplay_name'); //id = your ID model, name = your caption
         return $value;
     }
+    // show leve for admin to create level only
+    public static function getAllLevelsRole() {
+        $data = UsersLevel::find()->select('parent_id')->all();
+        $data =   ArrayHelper::map($data, 'parent_id', 'parent_id');
+        $value = (count($data) == 0) ? ['' => ''] : \yii\helpers\ArrayHelper::map(UsersLevel::find()->where(['not in', 'sr', $data])->all(), 'id', 'display_name'); //id = your ID model, name = your caption
+        return $value;
+    
+        
+    }
     public static function getAllLevels($show_parent=false) {
         $user_id = Yii::$app->user->getId();
         $user_level_id = Yii::$app->user->identity->user_level_id;
@@ -67,7 +77,7 @@ class UsersLevel extends \yii\db\ActiveRecord {
         {
            // $data = UsersLevel::find()->where(['!=','max_user','-1'])->all();
             $data = UsersLevel::find()->all();
-            
+           
         }
         else
         {
@@ -87,6 +97,11 @@ class UsersLevel extends \yii\db\ActiveRecord {
     }
 
     public static function getLevels($q,$parent_id=null,$max_user=null,$include_parent=false,$include_all_child = false) {
+        if(!empty($parent_id))
+        {
+            $patentDetail =  \common\models\UsersLevel::findOne(['id'=>$parent_id]);
+            $parent_id = $patentDetail->sr;
+        }
         $out = ['results' => ['id' => '', 'text' => '']];
         $query = new \yii\db\Query();
         $query->select('id as id, display_name AS text')
@@ -134,5 +149,19 @@ class UsersLevel extends \yii\db\ActiveRecord {
       $levelDetail = UsersLevel::findOne(['id'=>$id]);
       return $levelDetail['display_name'];
   }
-
+  public function beforeValidate()
+  {
+      $action = Yii::$app->controller->action->id;
+      if (parent::beforeValidate()) {
+          if ($action == 'create' || $action == 'import' ) {
+              $companyId = Yii::$app->user->identity->company_id;
+              $branchId = Yii::$app->user->identity->branch_id;
+              $this->id = \common\components\Constants::GUID();
+            //   $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Postcode::tableName(), $companyId);
+              $this->company_id = $companyId;
+              $this->branch_id = $branchId;
+          }
+          return true;
+      }
+  }
 }

@@ -38,9 +38,9 @@ class Account extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['created_by', 'updated_by', 'user_id'], 'integer'],
+            [['created_by', 'updated_by'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
-            [['user_id'], 'required'],
+            [['user_id','id','sr','company_id', 'branch_id'], 'required'],
             [['account_type', 'account_name', 'account_description'], 'string', 'max' => 45],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
@@ -77,7 +77,22 @@ class Account extends \yii\db\ActiveRecord
             'user_id' => Yii::t('app', 'User ID'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'import' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Account::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -85,7 +100,10 @@ class Account extends \yii\db\ActiveRecord
     {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
-
+    public static function find()
+    {
+        return parent::find()->where(['=', 'company_id',Yii::$app->session['company_id']])->andWhere(['=','branch_id',Yii::$app->session['branch_id']]);
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -97,8 +115,7 @@ class Account extends \yii\db\ActiveRecord
         for($i=1;$i<=2;$i++)
         {
             $account = new Account();
-            $account->isNewRecord = true;
-            $account->id = Null;
+           $account->beforeValidate();
             $account->account_type = ''.$i;
             $account->account_name =$model->username.'-receivable';    
             if($i==2)
@@ -107,7 +124,8 @@ class Account extends \yii\db\ActiveRecord
             }
             $account->account_description = 'Account to calculate profit';
             $account->user_id = $model->id;
-            $account->save();
+           $account->save();
+           
         }
         
     }

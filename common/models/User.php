@@ -87,10 +87,10 @@ class User extends ActiveRecord implements IdentityInterface
         return [
 
             [['username', 'password', 'email', 'first_name', 'last_name'], 'string', 'max' => 255],
-            [['username', 'email', 'first_name', 'last_name', 'user_level_id'], 'required'],
+            [['username', 'email', 'first_name', 'last_name', 'user_level_id','id','sr','company_id', 'branch_id'], 'required'],
             ['password', 'required', 'on' => 'insert'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            [['status', 'created_at', 'updated_at', 'parent_id', 'user_level_id'], 'integer'],
+            [['status', 'created_at', 'updated_at'], 'integer'],
             [['created_at', 'updated_at', 'phone_no', 'address', 'city', 'country', 'all_level', 'parent_user', 'stock_in', 'quantity', 'product_order_info', 'price', 'unit_price', 'total_price', 'company_user', 'product_id', 'name', 'order_type','province','district','postal_code'], 'safe'],
             [['username', 'password_hash', 'password_reset_token', 'email'], 'string', 'max' => 255],
             [['auth_key'], 'string', 'max' => 32],
@@ -102,7 +102,23 @@ class User extends ActiveRecord implements IdentityInterface
             [['password_reset_token'], 'unique'],
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            
+            if ($action == 'create' || $action == 'import' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\User::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @inheritdoc
      */
@@ -164,7 +180,7 @@ class User extends ActiveRecord implements IdentityInterface
         $expire = Yii::$app->params['user.passwordResetTokenExpire'];
         return $timestamp + $expire >= time();
     }
-
+  
     /**
      * @inheritdoc
      */
@@ -172,7 +188,10 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return $this->getPrimaryKey();
     }
-
+    // public static function find()
+    // {
+    //     return parent::find()->where(['=', 'company_id',Yii::$app->session['company_id']])->andWhere(['=','branch_id',Yii::$app->session['branch_id']]);
+    // }
     /**
      * @inheritdoc
      */
@@ -283,6 +302,7 @@ class User extends ActiveRecord implements IdentityInterface
 
     public static function getUsers($q, $parent_id = null, $user_id = null, $user_level = null, $company_user = null, $include_parent = false, $include_self = true)
     {
+       
         $out = ['results' => ['id' => '', 'text' => '']];
         $query = new \yii\db\Query();
         $query->select('id as id, username AS text')
@@ -295,7 +315,8 @@ class User extends ActiveRecord implements IdentityInterface
         if (!$include_self) {
             $query->andWhere(['!=', 'id', $user_id]);
         }
-        if (!is_null($parent_id)) {
+        if (!empty($parent_id)) {
+          
             if ($include_parent) {
                 $query->andWhere(['or', ['parent_id' => $parent_id], ['id' => $parent_id]]);
             } else {
@@ -303,7 +324,7 @@ class User extends ActiveRecord implements IdentityInterface
             }
 
         }
-        if (!is_null($user_level)) {
+        if (!empty($user_level)) {
             $query->andWhere(['=', 'user_level_id', $user_level]);
         }
 
@@ -335,6 +356,7 @@ class User extends ActiveRecord implements IdentityInterface
         $transaction = Yii::$app->db->beginTransaction();
         try {
             //upload image
+            $model->beforeValidate();
             $model->order_type = "Order";
             $photo = UploadedFile::getInstance($model, 'profile');
             if ($photo !== null) {
@@ -350,10 +372,10 @@ class User extends ActiveRecord implements IdentityInterface
             // check seller or general
             if ($current_level->max_user == '-1') {
                 $auth = \Yii::$app->authManager;
-                $role = $auth->getRole('seller');
+                $role = $auth->getRole($current_level->name );
             } else {
                 $auth = \Yii::$app->authManager;
-                $role = $auth->getRole('general');
+                $role = $auth->getRole($current_level->name);
             }
 
             //   check the limit of user
@@ -369,7 +391,8 @@ class User extends ActiveRecord implements IdentityInterface
             } else {
                 if ($model->save()) {
                     \common\models\Account::create_accounts($model);
-                    \common\models\StockStatus::set_minimum_stock_level($model->id);
+                    \common\models\StockStatus::set_minimum_stock_level($model);
+                  
                     $order = \common\models\Order::insertOrder($model, true, false, false, true);
                     //bonus for super vip or vip
                     $super_vip_level = array_search('Super Vip Team', \common\models\Lookup::$user_levels);

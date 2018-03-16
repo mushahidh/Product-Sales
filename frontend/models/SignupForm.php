@@ -15,6 +15,19 @@ class SignupForm extends Model
     public $first_name;
     public $last_name;
     public $profile;
+    public $logo;
+    public $country;
+    public $state;
+    public $city;
+    public $zip;
+    public $name;
+    public $id;
+    public $sr;
+    public $company_id;
+    public $branch_id;
+    
+    
+    
     /**
      * @inheritdoc
      */
@@ -25,9 +38,9 @@ class SignupForm extends Model
             ['username', 'required'],
             ['username', 'unique', 'targetClass' => '\common\models\User', 'message' => 'This username has already been taken.'],
             ['username', 'string', 'min' => 2, 'max' => 255],
-            [['first_name','last_name'], 'safe'],
+            [['first_name','last_name','country','state','city','zip','name','id','sr','company_id','branch_id'], 'safe'],
             ['email', 'trim'],
-            [['profile'], 'file'],
+            [['profile','logo'], 'file'],
             ['email', 'required'],
             ['email', 'email'],
             ['email', 'string', 'max' => 255],
@@ -36,6 +49,21 @@ class SignupForm extends Model
             ['password', 'required'],
             ['password', 'string', 'min' => 6],
         ];
+    }
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'signup') {
+                $companyDetail = \common\models\Company::createCompany($this);
+                $branchDetail = \common\models\Branch::createBranch($this,$companyDetail);
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\User::tableName(), $companyDetail->id);
+                $this->company_id = $companyDetail->id;
+                $this->branch_id = $branchDetail->id;
+            }
+            return true;
+        }
     }
 
     /**
@@ -48,16 +76,19 @@ class SignupForm extends Model
         if (!$this->validate()) {
             return null;
         }
-        
         $user = new User();
+        $user->id = $this->id;
+        $user->sr = $this->sr;
+        $user->company_id = $this->company_id;
+        $user->branch_id = $this->branch_id;
           //upload image
-          $photo = UploadedFile::getInstance($model, 'profile');
-         
-          if ($photo !== null) {
-            $model->profile= $photo->name;
-            $ext = end((explode(".", $photo->name)));
-            $model->profile = Yii::$app->security->generateRandomString() . ".{$ext}";
-            $path =  Yii::getAlias('@app').'/web/uploads/'.$model->profile;
+        $photo = UploadedFile::getInstance($model, 'profile');
+        if ($photo !== null) {
+            $user->profile= $photo->name;
+            $array = explode(".", $photo->name);
+            $ext=end($array);
+            $user->profile = Yii::$app->security->generateRandomString() . ".{$ext}";
+            $path =  Yii::getAlias('@app').'/web/uploads/'.$user->profile;
          //   $path = Yii::getAlias('@upload') .'/'. $model->payment_slip;
             $photo->saveAs($path);
           }
@@ -65,9 +96,13 @@ class SignupForm extends Model
         $user->last_name = $this->last_name;
         $user->username = $this->username;
         $user->email = $this->email;
+        $user->user_level_id = $this->sr;
         $user->setPassword($this->password);
         $user->generateAuthKey();
-        
+        if(!$user->save()){
+            var_dump($user->getErrors());
+            exit();
+        }
         return $user->save() ? $user : null;
     }
 }

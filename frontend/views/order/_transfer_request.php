@@ -128,7 +128,7 @@ jQuery(document).ready(function() {
          $('#order-parent_user').on('change', function () {
                 var data = $('#order-parent_user').select2('data');
                 var user_id=data[0].id;
-                var url="/user/get-parent-id?id="+user_id;
+                var url="../user/get-parent-id?id="+user_id;
                 $.post(url, function (data) {
                     $("#transfer_parent").val(data);
                 });

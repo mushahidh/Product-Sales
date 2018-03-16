@@ -37,14 +37,49 @@ use yii\db\Query;
                 ?>
             </div>
     </div>
-    <?php } ?>   
-    <div class="col-md-4"><?php echo $form->field($model, 'quantity')->textInput(['maxlength' => true]); ?></div>
-    <div class="col-md-4"><?php echo $form->field($model, 'single_price')->textInput(['readonly' => true]); ?></div>
-    <div class="col-md-4"><?php echo $form->field($model, 'total_price')->textInput(['readonly' => true]); ?></div>
-    <div class="noproduct"></div>
+    <?php } ?> 
+    <div class="row">
+
+    <h3>Order Items</h3>
+    <div class="row first-row">
+    
+<div class="col-md-5">
+<?php
+echo $form->field($model, 'product_id')->widget(Select2::classname(), [
+    'data' => common\models\Product::getallproduct(),
+    'theme' => Select2::THEME_BOOTSTRAP,
+    'options' => ['placeholder' => 'Select Product  ...'],
+    //'initValueText' => isset($model->customerUser->customer_name) ? $model->customerUser->company_name : "",
+    'theme' => Select2::THEME_BOOTSTRAP,
+    'pluginOptions' => [
+    'allowClear' => true,
+    ],
+]);
+?>
+</div>
+<div class="col-md-5">
+<?php echo $form->field($model, 'quantity')->textInput(['maxlength' => true]); ?>
+</div>
+<div class="col-md-2">
+<label class="control-label" for="order-quantity" style="visibility:hidden;">Item</label>
+    <button class=" btn btn-brand-primary add-button" id="add-button" type="button"><span class="loading-next-btn"></span>add item</button>
+    </div>
+    </div>
+
+<input type="hidden" id="order-hidden" class="form-control" name="Order[product_order_info]" maxlength="45"  aria-invalid="true">
+
+<div class="row ">
+  
+    <div id="items_all"></div>
+<div class="noproduct"></div>
+    
+</div>        
+
+</div>  
+  
     <?php
         $user_id = Yii::$app->user->getId();
-        echo $form->field($model, 'product_id')->hiddenInput(['value' => '1'])->label(false);
+        // echo $form->field($model, 'product_id')->hiddenInput(['value' => '1'])->label(false);
     ?>
     <?php if (Yii::$app->user->isGuest) { ?>
         <?php
@@ -55,6 +90,5 @@ use yii\db\Query;
         echo $form->field($model, 'order_type')->hiddenInput(['value' => 'Order'])->label(false);
     }
     ?>
-
 
 

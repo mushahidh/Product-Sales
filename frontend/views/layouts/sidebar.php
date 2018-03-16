@@ -30,7 +30,7 @@ use yii\models\users_level;
                         <div class="profile-details col-md-8 col-sm-8 col-xs-8">
 
                             <h3>
-                                <a href="<?= Yii::$app->homeUrl;?>user/view/<?= Yii::$app->user->identity->id?>"><?php echo Yii::$app->user->identity->username; ?></a>
+                                <a href="<?= Yii::$app->homeUrl;?>user/view?id=<?= Yii::$app->user->identity->id?>"><?php echo Yii::$app->user->identity->username; ?></a>
 
                                 <!-- Available statuses: online, idle, busy, away and offline -->
                                 <span class="profile-status online"></span>
@@ -67,6 +67,16 @@ use yii\models\users_level;
                                 <span class="title"><?= Yii::t('app','Dashboard'); ?></span>
                             </a>
                         </li>
+                        <?php 
+                        if(isset($Role['super_admin'])){
+                        ?>
+                        <li class=""> 
+                            <a href="<?= Yii::$app->homeUrl;?>setting/index">
+                                <i class="fa fa-dashboard"></i>
+                                <span class="title"><?= Yii::t('app','Setting'); ?></span>
+                            </a>
+                        </li>
+                        <?php  } ?>
                         <!-- profile -->
                         <li class=""> 
                             <a href="javascript:;">
@@ -76,11 +86,11 @@ use yii\models\users_level;
                             </a>
                             <ul class="sub-menu" >
                                 <li>
-                                    <a class="" href="<?= Yii::$app->homeUrl;?>user/view/<?= Yii::$app->user->identity->id?>"><?= Yii::t('app', 'Visit Profile');?></a>
+                                    <a class="" href="<?= Yii::$app->homeUrl;?>user/view?id=<?= Yii::$app->user->identity->id?>"><?= Yii::t('app', 'Visit Profile');?></a>
 
                                 </li>
                                 <li>
-                                    <a class="" href="<?= Yii::$app->homeUrl;?>user/update/<?= Yii::$app->user->identity->id?>" ><?= Yii::t('app', 'Update Profile');?></a>
+                                    <a class="" href="<?= Yii::$app->homeUrl;?>user/update?id=<?= Yii::$app->user->identity->id?>" ><?= Yii::t('app', 'Update Profile');?></a>
                                 </li>
                                
                                 
@@ -88,14 +98,6 @@ use yii\models\users_level;
                            
                         </li>
                         <!-- end profile -->
-                        <?php  
-                      
-                        //$vip_level_id = array_search('VIP Team', \common\models\Lookup::$user_levels);
-                        $vip_level_id = array_search('VIP Team Advance Level', \common\models\Lookup::$user_levels);
-                       $user_level_id =  Yii::$app->user->identity->user_level_id;
-        if($user_level_id <= $vip_level_id){
-        
-                        ?>
                         <li class=""> 
                             <a href="javascript:;">
                                 <i class="fa fa-users"></i>
@@ -119,9 +121,7 @@ use yii\models\users_level;
                             </ul>
                          
                         </li>
-        <?php }
-   
-                   ?>
+       
                      <li class=""> 
                             <a href="javascript:;">
                                 <i class="fa fa-pencil-square-o"></i>
@@ -216,7 +216,16 @@ use yii\models\users_level;
                             </a>
                             <ul class="sub-menu" >
                                 <li>
+                                <?php
+                                 $settingPrice = \common\models\Setting::find()->one();
+                                 $rolebasedPricing = array_search('Role Based Pricing', \common\models\Lookup::$pricing_level);
+                                 if($rolebasedPricing  == $settingPrice->pricing_method){ ?>
                                 <a class="" href="<?= Yii::$app->homeUrl; ?>user-product-level"><?= Yii::t('app', 'Manage Level Prices');?></a>
+                                <?php }else{ ?>
+                                    <a class="" href="<?= Yii::$app->homeUrl; ?>quantity-based-pricing"><?= Yii::t('app', 'Quantity Based Prices');?></a>
+                                
+                             <?php    }
+                                ?>
                                 <a class="" href="<?= Yii::$app->homeUrl; ?>product"><?= Yii::t('app', 'Manage Product Prices');?></a>
                                 </li>
                             

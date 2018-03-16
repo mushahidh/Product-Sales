@@ -19,23 +19,41 @@ jQuery(document).ready(function() {
             $('#order-orde').val(data);
         });
     });
-    $('#order-rquest_customer,#order-child_user').on('change', function() {
-        $.post("../user/getuseraddress?id=" + $(this).val(), function(data) {
 
-            var json = $.parseJSON(data);
+    //this jis product code
 
-            $('#order-email').val(json.email);
-            $('#order-mobile_no').val(json.mobile_no);
-            $('#order-phone_no').val(json.phone_no);
-            $('#order-district').val(json.district);
-            $('#order-province').val(json.province);
-            $('#order-postal_code').val(json.postal_code);
-            $('#order-address').val(json.address);
-            $('#order-country').val(json.country);
-
-
-        });
+    $("#items_all").jsGrid({
+        //height: "70%",
+        width: "100%",
+        filtering: true,
+        editing: true,
+        inserting: true,
+        sorting: true,
+        //paging: true,
+        autoload: true,
+        //pageSize: 15,
+        //pageButtonCount: 5,
+        controller: db_items,
+        fields: [
+            // {name: "item_number", title: "Item Number", id: "item_number", width: "auto", type: "hidden"},
+            { name: "unit", title: "Units", type: "text", width: "auto" },
+            { name: "price", title: "Price", type: "text", width: "auto", type: "disabled" },
+            { name: "total_price", title: "Total Price", type: "text", width: "auto", type: "disabled" },
+            { name: "product", title: "Product", type: "text", width: "auto", type: "disabled" },
+            { name: "product_id", title: "Product ID", css: "hide", width: 0, type: "disabled" },
+            { type: "control" }
+        ]
     });
-    //this code is to hidden the grid and show for order and request if user login
+    $('.jsgrid-insert-mode-button').click();
 
+    $('.save-button').click(function(e) {
+        if (db_items.clients == '') {
+            $('.vehcle_not_found').html('Add Product Order Please');
+            e.preventDefault();
+            return;
+        } else {
+            $('#order-hidden').val(JSON.stringify({ order_info: db_items.clients }));
+
+        }
+    });
 });

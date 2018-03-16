@@ -889,6 +889,7 @@ a:focus {
 
 
 /*--- Search Form ----*/
+
 .page-topbar li.searchform .input-group {
     top: 12px;
     width: 30px;
@@ -9580,6 +9581,10 @@ border-left: 3px solid transparent;
 
 .report-view .table.table-bordered {
     background-color: #fff;
+}
+
+.jsgrid-grid-body {
+    overflow: hidden !important;
 }
 
 .report-view .table.table-bordered thead tr th {

@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use kartik\select2\Select2;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\UsersLevel */
@@ -14,9 +15,22 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'display_name')->textInput(['maxlength' => true]) ?>
-    
+    <?php
+echo $form->field($model, 'parent_id')->widget(Select2::classname(), [
+        'data' => common\models\UsersLevel::getAllLevelsRole(),
+        'theme' => Select2::THEME_BOOTSTRAP,
+        'options' => ['placeholder' => 'Select a Level  ...'],
+        //'initValueText' => isset($model->customerUser->customer_name) ? $model->customerUser->company_name : "",
 
-    <?= $form->field($model, 'parent_id')->textInput() ?>
+        'theme' => Select2::THEME_BOOTSTRAP,
+        'pluginOptions' => [
+            'allowClear' => true,
+
+        ],
+
+    ]);
+        ?>
+
 
     <?= $form->field($model, 'max_user')->textInput() ?>
 

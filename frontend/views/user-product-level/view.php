@@ -6,7 +6,7 @@ use yii\widgets\DetailView;
 /* @var $this yii\web\View */
 /* @var $model common\models\UserProductLevel */
 
-$this->title = $model->userLevel->name;
+$this->title = $model->sr;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'User Product Levels'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>

@@ -104,7 +104,7 @@ echo $form->field($model, 'parent_user')->widget(Select2::classname(), [
             'url' => '../user/get-users',
             'dataType' => 'json',
             'data' => new \yii\web\JsExpression('function(params) { var user_level = $("#order-all_level").val();
-                            var parent_id = ' . Yii::$app->user->identity->id . ';
+                            var parent_id = "' .Yii::$app->user->identity->id . '";
                             return {q:params.term,user_level:user_level,parent_id:parent_id,include_parent:true}; }'),
         ],
     ],

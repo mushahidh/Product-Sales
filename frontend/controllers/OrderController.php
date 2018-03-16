@@ -210,7 +210,6 @@ class OrderController extends Controller
         if ($model->order_external_code != null) {
             $response = \common\models\StockIn::GetOrderExternalStatus($model->order_external_code);
             if ($response != null) {
-
                 $response = json_decode($response);
                 if ($model->shipping_status != $response->shipping_status) {
                     $model->shipping_status = $response->shipping_status;
@@ -258,7 +257,7 @@ class OrderController extends Controller
         $model = new Order();
         $product = \common\models\Product::findOne(['id' => '1']);
         if ($model->load(Yii::$app->request->post())) {
-
+       
             $orderCreate = \common\models\Order::CreateOrder($model);
             if ($orderCreate == 'transaction_complete') {
                 return $this->redirect(['view', 'id' => $model->id]);
@@ -308,12 +307,15 @@ class OrderController extends Controller
         $model = $this->findModel($id);
         $model = Order::updateBeforeLoad($model);
         $type = $model->order_type;
+ 
         if ($model->load(Yii::$app->request->post())) {
             if ($model->validate()) {
                 $isOrderSaved = \common\models\Order::updateSave($model);
-
                 $isShippingSaved = \common\models\ShippingAddress::updateShippingAddress($model);
-                $isProductOrderSaved = \common\models\ProductOrder::updateProductOrder($model);
+                $command = Yii::$app->db->createCommand()
+                ->delete('product_order',  "order_id ='" . $model->id."'")
+                ->execute();
+                $isProductOrderSaved = \common\models\ProductOrder::insert_order($model,$model->id);
                 if ($isShippingSaved && $isProductOrderSaved && $isOrderSaved) {
                     return $this->redirect(['view', 'id' => $model->id]);
                 } else {

@@ -29,8 +29,7 @@ class StockStatus extends \yii\db\ActiveRecord {
      */
     public function rules() {
         return [
-            [['user_id', 'product_id'], 'required'],
-            [['user_id', 'product_id'], 'integer'],
+            [['user_id', 'product_id','id','sr','company_id', 'branch_id'], 'required'],
             [['below_percentage'], 'string', 'max' => 45],
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::className(), 'targetAttribute' => ['product_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
@@ -48,7 +47,22 @@ class StockStatus extends \yii\db\ActiveRecord {
             'product_id' => Yii::t('app', 'Product ID'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\StockStatus::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+                
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -69,15 +83,14 @@ class StockStatus extends \yii\db\ActiveRecord {
         $model->save();
     }
 
-    public static function set_minimum_stock_level($user_id) {
+    public static function set_minimum_stock_level($model) {
 
         $stock_status = new StockStatus();
-        $stock_status->isNewRecord = true;
-        $stock_status->id = Null;
+        $stock_status->beforeValidate();
         $stock_status->below_percentage = '20';
-        $stock_status->product_id = 1;
-        $stock_status->user_id = $user_id;
-        $stock_status->save();
+        $stock_status->product_id = $model->product_id;
+        $stock_status->user_id = $model->id;
+       $stock_status->save();
     }
 
 }

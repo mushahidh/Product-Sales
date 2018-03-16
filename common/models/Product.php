@@ -4,6 +4,7 @@ namespace common\models;
 use yii\helpers\Html;
 use Yii;
 use yii\web\UploadedFile;
+use yii\db\Query;
 
 /**
  * This is the model class for table "product".
@@ -36,7 +37,7 @@ class Product extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            // [['category_id'], 'required'],
+             [['id','sr','company_id', 'branch_id'], 'required'],
             [['category_id'], 'integer'],
             [['description'], 'string'],
             [['price'], 'number'],
@@ -59,7 +60,21 @@ class Product extends \yii\db\ActiveRecord
             'price' => Yii::t('app', 'Price'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create'  ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+                $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Product::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -126,5 +141,15 @@ class Product extends \yii\db\ActiveRecord
             $all_images[] = Html::img("$image_url",  ['class'=>'file-preview-image']);
         }
         return $all_images;
+    }
+    public static function totalStock($id,$user_id){
+        $order_quantity = (new Query())
+        ->select('SUM(remaining_quantity) as remaning_stock')
+        ->from('stock_in')   
+        ->where("user_id = '$user_id'")
+        ->andWhere("product_id = '$id'")
+        ->groupby(['product_id'])
+        ->one();
+        return $order_quantity['remaning_stock'];
     }
 }

@@ -91,7 +91,13 @@ $this->params['breadcrumbs'][] = $this->title;
 // ... other params
 ]),
 ],    
-   
+[
+    'label' => 'Quantity and Price',
+    'format' => 'raw',
+    'value' => function($model) {
+        return $model->productorder($model->id);
+    },
+],
         [
             'label' => Yii::t('app', 'Status'),
       'attribute' => 'status',
@@ -110,28 +116,17 @@ $this->params['breadcrumbs'][] = $this->title;
        8 => "Return Canceled",],
    ],
             'order_ref_no',
-            [
-                'label' => 'Payment Mode',
-                'format' => 'raw',
-                'value' => function($model) {
-                    if(isset($model->payment_method))
-                    {
-                        return  \common\models\Lookup::$payment_method[$model->payment_method];
-                    }
-                    return '';
-                },
-            ],
-            'shipper',
+         
              ['class' => 'yii\grid\ActionColumn',
             'template' => '{view}{edit}{delete}',
             'buttons' => [
                     'view' => function ($url, $model) {
-                        return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl.'order/view/'.$model->id);
+                        return Html::a('<span class="glyphicon glyphicon-eye-open"></span>', Yii::$app->homeUrl.'order/view?id='.$model->id);
                     },
                     'edit' => function ($url, $model) {
                         $Role = Yii::$app->authManager->getRolesByUser($model->user_id);
                         if($model->status == array_search('Pending', \common\models\Lookup::$status) && $model->created_by == Yii::$app->user->identity->id){
-                            return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl.'order/update/'.$model->id);
+                            return Html::a('<span class="glyphicon glyphicon-pencil"></span>', Yii::$app->homeUrl.'order/update?id='.$model->id);
                         }
                     },
                     
