@@ -4,7 +4,7 @@ namespace frontend\controllers;
 use common\models\Order;
 use common\models\OrderSearch;
 use Yii;
-use yii\db\Query;
+use common\components\Query;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -255,7 +255,7 @@ class OrderController extends Controller
             $type = "Order";
         }
         $model = new Order();
-        $product = \common\models\Product::findOne(['id' => '1']);
+      //  $product = \common\models\Product::findOne(['id' => '1']);
         if ($model->load(Yii::$app->request->post())) {
        
             $orderCreate = \common\models\Order::CreateOrder($model);
@@ -266,7 +266,7 @@ class OrderController extends Controller
         return $this->render('create', [
             'model' => $model,
             'type' => $type,
-            'product' => $product,
+           // 'product' => $product,
         ]);
     }
     public function actionApproveAll()

@@ -25,7 +25,7 @@ use common\components\Query;
  * @property Order $order
  * @property PaymentDetail $paymentDetail
  */
-class Gl extends \yii\db\ActiveRecord
+class Gl extends \common\components\ActiveRecord
 {
     public $user_level;
     public $receivable_user;

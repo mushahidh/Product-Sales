@@ -5,7 +5,8 @@ use yii\behaviors\TimestampBehavior;
 use yii\behaviors\BlameableBehavior;
 use yii\db\Expression;
 use Yii;
-use Yii\db\Query;
+use common\components\Query;
+
 /**
  * This is the model class for table "quantity_based_pricing".
  *
@@ -23,7 +24,7 @@ use Yii\db\Query;
  * @property Branch $branch
  * @property Company $company
  */
-class QuantityBasedPricing extends \yii\db\ActiveRecord
+class QuantityBasedPricing extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -73,7 +74,7 @@ class QuantityBasedPricing extends \yii\db\ActiveRecord
     {
         return [
             'id' => Yii::t('app', 'ID'),
-            'quantity' => Yii::t('app', 'Quantity'),
+            'quantity' => Yii::t('app', 'Quantity(<=)'),
             'price' => Yii::t('app', 'Price'),
             'company_id' => Yii::t('app', 'Company ID'),
             'branch_id' => Yii::t('app', 'Branch ID'),

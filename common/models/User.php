@@ -6,7 +6,8 @@ use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
-use yii\db\Query;
+use common\components\Query;
+
 use yii\web\IdentityInterface;
 use yii\web\UploadedFile;
 
@@ -108,8 +109,14 @@ class User extends ActiveRecord implements IdentityInterface
         if (parent::beforeValidate()) {
             
             if ($action == 'create' || $action == 'import' ) {
-                $companyId = Yii::$app->user->identity->company_id;
-                $branchId = Yii::$app->user->identity->branch_id;
+                if(Yii::$app->user->isGuest){
+                    $refferalUser = \common\models\User::findOne(['id'=>Yii::$app->request->get('id')]);
+                    $companyId = $refferalUser->company_id;
+                    $branchId = $refferalUser->branch_id;
+                }else{
+                    $companyId = Yii::$app->user->identity->company_id;
+                    $branchId = Yii::$app->user->identity->branch_id;
+              }
                 $this->id = \common\components\Constants::GUID();
                 $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\User::tableName(), $companyId);
                 $this->company_id = $companyId;
@@ -304,7 +311,7 @@ class User extends ActiveRecord implements IdentityInterface
     {
        
         $out = ['results' => ['id' => '', 'text' => '']];
-        $query = new \yii\db\Query();
+        $query = new \common\components\Query();
         $query->select('id as id, username AS text')
             ->from('user')
             ->where('true');
@@ -469,7 +476,7 @@ class User extends ActiveRecord implements IdentityInterface
         }
 
         $out = ['results' => ['id' => '', 'text' => '']];
-        $query = new \yii\db\Query();
+        $query = new \common\components\Query();
         $query->select('id as id, username AS text')
             ->from('user')
             ->where(['=', 'user_level_id', $type]);
@@ -515,5 +522,20 @@ class User extends ActiveRecord implements IdentityInterface
         }
         return $model;
     }
-
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+        $action = Yii::$app->controller->action->id;
+        if($action == 'signup'){
+            $SuperAdminLevel = \common\models\UsersLevel::createSuperAdminLevel($this);
+            $SuperAccounts  = \common\models\Account::create_accounts($this);
+            if($SuperAdminLevel){
+                Yii::$app->db->createCommand()
+                ->update('user', ['user_level_id' => $SuperAdminLevel->id ], "id ='" .$this->id."'")
+                ->execute();
+            }
+          
+        }
+      
+    }
 }

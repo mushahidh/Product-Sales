@@ -16,7 +16,7 @@ use Yii;
  * @property Product $product
  * @property UsersLevel $userLevel
  */
-class UserProductLevel extends \yii\db\ActiveRecord
+class UserProductLevel extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -48,7 +48,7 @@ class UserProductLevel extends \yii\db\ActiveRecord
         return [
             'id' => Yii::t('app', 'ID'),
             'product_id' => Yii::t('app', 'Product Name'),
-            'units' => Yii::t('app', 'Units'),
+            'units' => Yii::t('app', 'Units(<=)'),
             'price' => Yii::t('app', 'Price'),
             'user_level_id' => Yii::t('app', 'User Level Name'),
         ];
@@ -77,7 +77,7 @@ class UserProductLevel extends \yii\db\ActiveRecord
                 $companyId = Yii::$app->user->identity->company_id;
                 $branchId = Yii::$app->user->identity->branch_id;
                 $this->id = \common\components\Constants::GUID();
-                 $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\UserProductLevel::tableName(), $companyId);
+                // $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\UserProductLevel::tableName(), $companyId);
                 $this->company_id = $companyId;
                 $this->branch_id = $branchId;
             }
@@ -85,7 +85,7 @@ class UserProductLevel extends \yii\db\ActiveRecord
         }
     }
     public static function pricingData($id, $user_level, $product_id, $type = null, $check_units = true){
-        
+      
         $productDetail = \common\models\Product::findOne(['id'=>$product_id]);
         $detai_item['pname'] = $productDetail->name;
         $detai_item['pid'] = $product_id;
@@ -103,7 +103,7 @@ class UserProductLevel extends \yii\db\ActiveRecord
         }
         $query->andWhere(['<=', 'units', $id]);
         if ($check_units == 'false') {
-            $price_query = new \yii\db\Query();
+            $price_query = new \common\components\Query();
             $price_query->select('min(price) as min_price,max(price) as max_price')
                 ->from('user_product_level')
                 ->where(['product_id' => $product_id]);
@@ -112,7 +112,7 @@ class UserProductLevel extends \yii\db\ActiveRecord
             }
             $price_query = $price_query->one();
         }
-        $query->orderBy(['price' => SORT_ASC]);
+        $query->orderBy(['price' => SORT_DESC]);
         $one_unit = $query->one();
         if ($one_unit) {
             $detai_item['price'] = $one_unit->price;

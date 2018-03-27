@@ -54,9 +54,9 @@ class Lookup
     ];
     public static $user_levels = [
         '1' => 'Super Admin',
-        '1000' => 'Admin Team',
-        '2000' => 'Sales Team',
-        '3000' => 'Staff Team',
+        '1000' => 'Admin',
+        '2000' => 'Sales',
+        '3000' => 'Staff',
        
 
     ];

@@ -88,18 +88,23 @@ class UserProductLevelController extends Controller
           $file = \yii\web\UploadedFile::getInstance($model, 'file');
             $data = \common\components\Excel::import($file->tempName, ['setFirstRecordAsKeys' => true]);
 
-            foreach ($data as $entry) {
-           
+            foreach ($data[0] as $entry) {
+               
                  try {
+                  
                     $usersPlevel = new \common\models\UserProductLevel();
                     $allLevel = \common\models\UsersLevel::findOne(['sr'=>$entry['user_level_id']]);
                     $usersPlevel->sr = $entry['id'] ;
                     $usersPlevel->units = $entry['units'] ;
                     $usersPlevel->price = $entry['price'] ;
-                    $usersPlevel->product_id = $model->product_id;
+                    $usersPlevel->product_id = $entry['product_id'];
+                   // $usersPlevel->product_id = $model->product_id;
                     $usersPlevel->user_level_id = $allLevel->id;
+                   
                     $usersPlevel->validate();
+                   
                     $usersPlevel->save();
+                   
                  }
                        catch (\Exception $e) {
                            var_dump($usersPlevel->getErrors());
@@ -226,12 +231,13 @@ class UserProductLevelController extends Controller
     }
     public function actionGetunitsprice($id, $user_level, $product_id, $type = null, $check_units = true)
     {
+      
         $settingPrice = \common\models\Setting::find()->one();
         $rolebasedPricing = array_search('Role Based Pricing', \common\models\Lookup::$pricing_level);
-        if($rolebasedPricing  == $settingPrice->pricing_method){
-         return  $pricingDetail = \common\models\UserProductLevel::pricingData($id, $user_level, $product_id, $type = null, $check_units = true);
+        if(isset($settingPrice) && $rolebasedPricing  == $settingPrice->pricing_method){
+         return  $pricingDetail = \common\models\UserProductLevel::pricingData($id, $user_level, $product_id, $type, $check_units);
         }else{
-           return $pricingDetail = \common\models\QuantityBasedPricing::pricingData($id, $user_level, $product_id, $type = null, $check_units = true);
+           return $pricingDetail = \common\models\QuantityBasedPricing::pricingData($id, $user_level, $product_id, $type, $check_units);
         }
 
     }

@@ -4,7 +4,7 @@ namespace common\models;
 use yii\helpers\Html;
 use Yii;
 use yii\web\UploadedFile;
-use yii\db\Query;
+use common\components\Query;
 
 /**
  * This is the model class for table "product".
@@ -20,7 +20,7 @@ use yii\db\Query;
  * @property StockIn[] $stockIns
  * @property UserProductLevel[] $userProductLevels
  */
-class Product extends \yii\db\ActiveRecord
+class Product extends \common\components\ActiveRecord
 {
     public $image;
     /**

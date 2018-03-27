@@ -6,7 +6,8 @@ use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\Expression;
-use yii\db\Query;
+use common\components\Query;
+
 use yii\web\UploadedFile;
 
 /**
@@ -27,7 +28,7 @@ use yii\web\UploadedFile;
  * @property User $user
  * @property ProductOrder[] $productOrders
  */
-class Order extends \yii\db\ActiveRecord
+class Order extends \common\components\ActiveRecord
 {
 
     public $order_type;
@@ -76,6 +77,7 @@ class Order extends \yii\db\ActiveRecord
 
     public function behaviors()
     {
+       
         return [
             [
                 'class' => BlameableBehavior::className(),
@@ -154,8 +156,14 @@ class Order extends \yii\db\ActiveRecord
                 $ref_no = (Order::find()->max('id')) + 1;
                 $this->order_ref_no = '' . $ref_no;
                 $this->requested_date = date('Y-m-d');
-                $companyId = Yii::$app->user->identity->company_id;
-                $branchId = Yii::$app->user->identity->branch_id;
+                if(Yii::$app->user->isGuest){
+                    $refferalUser = \common\models\User::findOne(['id'=>Yii::$app->request->get('id')]);
+                    $companyId = $refferalUser->company_id;
+                    $branchId = $refferalUser->branch_id;
+                }else{
+                    $companyId = Yii::$app->user->identity->company_id;
+                    $branchId = Yii::$app->user->identity->branch_id;
+              }
                 $this->id = \common\components\Constants::GUID();
                  $this->sr = \common\components\Constants::nextSrOrder(Yii::$app->db, \common\models\Order::tableName(), $companyId);
                 $this->company_id = $companyId;
@@ -433,10 +441,10 @@ echo $object_script;
             ->update('order', ['status' => '6'], "id ='" . $id."'")
             ->execute();
     }
-    public static function find()
-    {
-        return new Addfindcondition(get_called_class());
-    }
+    // public static function find()
+    // {
+    //     return new Addfindcondition(get_called_class());
+    // }
 //   public static function find()
 //     {
 //         return parent::find()->where(['=', 'company_id',Yii::$app->session['company_id']])->andWhere(['=','branch_id',Yii::$app->session['branch_id']]);

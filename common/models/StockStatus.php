@@ -15,7 +15,7 @@ use Yii;
  * @property Product $product
  * @property User $user
  */
-class StockStatus extends \yii\db\ActiveRecord {
+class StockStatus extends \common\components\ActiveRecord {
 
     /**
      * @inheritdoc

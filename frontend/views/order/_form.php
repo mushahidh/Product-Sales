@@ -143,6 +143,7 @@ if (!Yii::$app->user->isGuest) {
     jQuery(document).ready(function() {
 
         var type = '<?= $type ?>';
+        var role = '<?= $RoleName ?>';
         <?php
         if(!empty($referral_user))
         {
@@ -155,10 +156,14 @@ if (!Yii::$app->user->isGuest) {
                 if(type=="Return"){
                     GetUserStock($('#order-child_user').val());
                 }else{
-                    if($('#order-parent_user').val()){
+                    if($('#order-parent_user').val() && role == "super_admin"){
+                        GetUserStock($('#order-parent_user').val());
+                    }else if($('#order-request_agent_name').val()){
+                        GetUserStock($('#order-request_agent_name').val());
+                    }else if($('#order-parent_user').val() && type == "Transfer"){
                         GetUserStock($('#order-parent_user').val());
                     }else{
-                        GetUserStock($('#order-request_agent_name').val());
+                        GetUserStock($('#order-child_user').val());
                     }
                 }
                
@@ -187,6 +192,7 @@ if (!Yii::$app->user->isGuest) {
             if(already_in_table==false){
                       loadjsGrid(json);
                     }
+                    $('#order-quantity').val('');
               } else{
                     $(".noproduct").show();
                     $(".noproduct").html("<h5 style='text-align:center;color:red;'>You cannot purchase less than  " + json.units + " Units</h5>");
@@ -226,6 +232,7 @@ if (!Yii::$app->user->isGuest) {
                             }
                            
                     }
+                    $('#order-quantity').val('');
                       } else{
                         $(".noproduct").show();
                             $(".noproduct").html("<h5 style='text-align:center;color:red;'>The value can not empty and must be less than stock.</h5>");
@@ -246,6 +253,7 @@ if (!Yii::$app->user->isGuest) {
                              if(already_in_table==false){
                                  loadjsGridcustomer(json);
                                      }
+                                     $('#order-quantity').val('');
                 <?php
                 }
                 ?>

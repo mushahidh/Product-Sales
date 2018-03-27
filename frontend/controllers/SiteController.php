@@ -94,11 +94,9 @@ class SiteController extends Controller
         }
 
         $model = new LoginForm();
+
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
           
-            Yii::$app->session['company_id'] = Yii::$app->user->identity->company_id;
-            Yii::$app->session['branch_id'] = Yii::$app->user->identity->branch_id;
-        
             return $this->goBack();
         } else {
             return $this->render('login', [

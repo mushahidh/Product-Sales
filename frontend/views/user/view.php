@@ -70,7 +70,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                                 $Role = Yii::$app->authManager->getRolesByUser($user_id);
                                                 if(!isset($Role['super_admin'])){
                                                 ?>
-                                                    <li><i class="fa fa-external-link" aria-hidden="true"></i><a target="_blank" href="<?= Yii::$app->getUrlManager()->getBaseUrl(); ?>/order/create/<?= $model->id ?>"> <?= Yii::t('app', 'Generate Customer Link') ?></a></li>
+                                                    <li><i class="fa fa-external-link" aria-hidden="true"></i><a target="_blank" href="<?= Yii::$app->getUrlManager()->getBaseUrl(); ?>/order/create/?id<?= $model->id ?>"> <?= Yii::t('app', 'Generate Customer Link') ?></a></li>
                                                 <?php
                                                     }
                                                 ?>

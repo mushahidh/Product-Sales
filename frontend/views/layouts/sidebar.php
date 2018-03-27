@@ -38,7 +38,7 @@ use yii\models\users_level;
                             <?php 
                             $user_level = '';
 
-                            $query = (new \yii\db\Query())->select(['display_name'])->from('users_level')->where(['id' => Yii::$app->user->identity->user_level_id]);
+                            $query = (new \common\components\Query())->select(['display_name'])->from('users_level')->where(['id' => Yii::$app->user->identity->user_level_id]);
                                 $command = $query->createCommand();
                                 $data = $command->queryAll();
                                 
@@ -138,9 +138,9 @@ use yii\models\users_level;
                                     <a class="" href="<?= Yii::$app->homeUrl; ?>order/return"><?= Yii::t('app', 'Returns Orders');?>
                                     <span class="label label-orange"><?php
                                     if(isset($Role['super_admin'])){
-                                       echo  \common\models\Order::find()->where(['status'=>'3'])->count(); 
+                                       echo  \common\models\Order::find()->where(['=','status','3'])->count(); 
                                     }else {
-                                    echo  \common\models\Order::find()->where(['status'=>'3'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
+                                    echo  \common\models\Order::find()->andWhere(['status'=>'3'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
                                     }
                                         ?></span>
                                 
@@ -151,9 +151,9 @@ use yii\models\users_level;
                                     <a class="" href="<?= Yii::$app->homeUrl; ?>order/transfer"><?= Yii::t('app', 'Transfer Request');?>
                                     <span class="label label-orange"><?php
                                     if(isset($Role['super_admin'])){
-                                       echo  \common\models\Order::find()->where(['status'=>'5'])->count(); 
+                                       echo  \common\models\Order::find()->andWhere(['status'=>'5'])->count(); 
                                     }else {
-                                    echo  \common\models\Order::find()->where(['status'=>'5'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
+                                    echo  \common\models\Order::find()->andWhere(['status'=>'5'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
                                     }
                                         ?></span>
                                 </a>
@@ -164,9 +164,9 @@ use yii\models\users_level;
                                     <a class="" href="<?= Yii::$app->homeUrl; ?>order/pending"><?= Yii::t('app', 'Pending Orders');?>
                                     <span class="label label-orange"><?php
                                     if(isset($Role['super_admin'])){
-                                       echo  \common\models\Order::find()->where(['status'=>'0'])->count(); 
+                                       echo  \common\models\Order::find()->andWhere(['status'=>'0'])->count(); 
                                     }else {
-                                    echo  \common\models\Order::find()->where(['status'=>'0'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
+                                    echo  \common\models\Order::find()->andWhere(['status'=>'0'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
                                     }
                                         ?></span>
                                 </a>
@@ -176,9 +176,9 @@ use yii\models\users_level;
                                     <a class="" href="<?= Yii::$app->homeUrl; ?>order/approved"><?= Yii::t('app', 'Approved Orders');?>
                                     <span class="label label-orange"><?php
                                     if(isset($Role['super_admin'])){
-                                       echo  \common\models\Order::find()->where(['status'=>'1'])->count(); 
+                                       echo  \common\models\Order::find()->andWhere(['status'=>'1'])->count(); 
                                     }else {
-                                    echo  \common\models\Order::find()->where(['status'=>'1'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
+                                    echo  \common\models\Order::find()->andWhere(['status'=>'1'])->andWhere(['or',['order_request_id' => Yii::$app->user->identity->id],['user_id' => Yii::$app->user->identity->id]])->count();
                                     }
                                         ?></span>
                                 </a>
@@ -191,7 +191,7 @@ use yii\models\users_level;
                      <!-- order ends -->
               <?php      // if(!isset($Role['seller'])){ 
                        if(isset($Role['super_admin'])){ ?>
-                  
+            
                     
                      <li class=""> 
                             <a href="javascript:;">
@@ -219,13 +219,13 @@ use yii\models\users_level;
                                 <?php
                                  $settingPrice = \common\models\Setting::find()->one();
                                  $rolebasedPricing = array_search('Role Based Pricing', \common\models\Lookup::$pricing_level);
-                                 if($rolebasedPricing  == $settingPrice->pricing_method){ ?>
+                                 if(isset($settingPrice) && $rolebasedPricing  == $settingPrice->pricing_method){ ?>
                                 <a class="" href="<?= Yii::$app->homeUrl; ?>user-product-level"><?= Yii::t('app', 'Manage Level Prices');?></a>
                                 <?php }else{ ?>
                                     <a class="" href="<?= Yii::$app->homeUrl; ?>quantity-based-pricing"><?= Yii::t('app', 'Quantity Based Prices');?></a>
                                 
-                             <?php    }
-                                ?>
+                                 <?php  } ?>
+
                                 <a class="" href="<?= Yii::$app->homeUrl; ?>product"><?= Yii::t('app', 'Manage Product Prices');?></a>
                                 </li>
                             

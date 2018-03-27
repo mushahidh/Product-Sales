@@ -19,7 +19,7 @@ use Yii;
  *
  * @property Order $order
  */
-class ShippingAddress extends \yii\db\ActiveRecord
+class ShippingAddress extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -63,8 +63,14 @@ class ShippingAddress extends \yii\db\ActiveRecord
         $action = Yii::$app->controller->action->id;
         if (parent::beforeValidate()) {
             if ($action == 'create' || $action == 'import' ) {
-                $companyId = Yii::$app->user->identity->company_id;
-                $branchId = Yii::$app->user->identity->branch_id;
+                if(Yii::$app->user->isGuest){
+                    $refferalUser = \common\models\User::findOne(['id'=>Yii::$app->request->get('id')]);
+                    $companyId = $refferalUser->company_id;
+                    $branchId = $refferalUser->branch_id;
+                }else{
+                    $companyId = Yii::$app->user->identity->company_id;
+                    $branchId = Yii::$app->user->identity->branch_id;
+              }
                 $this->id = \common\components\Constants::GUID();
                 $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\ShippingAddress::tableName(), $companyId);
                 $this->company_id = $companyId;

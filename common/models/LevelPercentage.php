@@ -13,7 +13,7 @@ use Yii;
  * @property bool $is_company_wide
  * @property string $percentage
  */
-class LevelPercentage extends \yii\db\ActiveRecord
+class LevelPercentage extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

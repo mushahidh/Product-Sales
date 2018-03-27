@@ -99,10 +99,8 @@ class SignupForm extends Model
         $user->user_level_id = $this->sr;
         $user->setPassword($this->password);
         $user->generateAuthKey();
-        if(!$user->save()){
-            var_dump($user->getErrors());
-            exit();
-        }
+      
         return $user->save() ? $user : null;
     }
+    
 }

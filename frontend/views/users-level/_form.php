@@ -30,9 +30,11 @@ echo $form->field($model, 'parent_id')->widget(Select2::classname(), [
 
     ]);
         ?>
+    <?= $form->field($model, 'sr')->textInput() ?>
 
 
     <?= $form->field($model, 'max_user')->textInput() ?>
+
 
     <div class="form-group">
         <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>

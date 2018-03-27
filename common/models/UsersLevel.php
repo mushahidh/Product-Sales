@@ -14,7 +14,7 @@ use Yii;
  *
  * @property UserProductLevel[] $userProductLevels
  */
-class UsersLevel extends \yii\db\ActiveRecord {
+class UsersLevel extends \common\components\ActiveRecord {
 
     /**
      * @inheritdoc
@@ -45,7 +45,21 @@ class UsersLevel extends \yii\db\ActiveRecord {
             'max_user' => Yii::t('app', 'Max User'),
         ];
     }
-
+    public function beforeValidate()
+    {
+        $action = Yii::$app->controller->action->id;
+        if (parent::beforeValidate()) {
+            if ($action == 'create' || $action == 'import'  ) {
+                $companyId = Yii::$app->user->identity->company_id;
+                $branchId = Yii::$app->user->identity->branch_id;
+                $this->id = \common\components\Constants::GUID();
+              //   $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Postcode::tableName(), $companyId);
+                $this->company_id = $companyId;
+                $this->branch_id = $branchId;
+            }
+            return true;
+        }
+    }
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -61,8 +75,9 @@ class UsersLevel extends \yii\db\ActiveRecord {
     // show leve for admin to create level only
     public static function getAllLevelsRole() {
         $data = UsersLevel::find()->select('parent_id')->all();
+     
         $data =   ArrayHelper::map($data, 'parent_id', 'parent_id');
-        $value = (count($data) == 0) ? ['' => ''] : \yii\helpers\ArrayHelper::map(UsersLevel::find()->where(['not in', 'sr', $data])->all(), 'id', 'display_name'); //id = your ID model, name = your caption
+        $value = (count($data) == 0) ? ['' => ''] : \yii\helpers\ArrayHelper::map(UsersLevel::find()->andWhere(['not in', 'sr', $data])->all(), 'id', 'display_name'); //id = your ID model, name = your caption
         return $value;
     
         
@@ -103,7 +118,7 @@ class UsersLevel extends \yii\db\ActiveRecord {
             $parent_id = $patentDetail->sr;
         }
         $out = ['results' => ['id' => '', 'text' => '']];
-        $query = new \yii\db\Query();
+        $query = new \common\components\Query();
         $query->select('id as id, display_name AS text')
                 ->from('users_level')
                 ->where('true');
@@ -130,7 +145,7 @@ class UsersLevel extends \yii\db\ActiveRecord {
     }
     public static function getSellerLevels($q,$parent_level_id) {
         $out = ['results' => ['id' => '', 'text' => '']];
-        $query = new \yii\db\Query();
+        $query = new \common\components\Query();
         $query->select('id as id, display_name AS text')
                 ->from('users_level')
                 ->where('true')
@@ -149,19 +164,20 @@ class UsersLevel extends \yii\db\ActiveRecord {
       $levelDetail = UsersLevel::findOne(['id'=>$id]);
       return $levelDetail['display_name'];
   }
-  public function beforeValidate()
-  {
-      $action = Yii::$app->controller->action->id;
-      if (parent::beforeValidate()) {
-          if ($action == 'create' || $action == 'import' ) {
-              $companyId = Yii::$app->user->identity->company_id;
-              $branchId = Yii::$app->user->identity->branch_id;
-              $this->id = \common\components\Constants::GUID();
-            //   $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Postcode::tableName(), $companyId);
-              $this->company_id = $companyId;
-              $this->branch_id = $branchId;
-          }
-          return true;
-      }
-  }
+public static function createSuperAdminLevel($user){
+$usersLevel = new UsersLevel();
+$usersLevel->id = \common\components\Constants::GUID();
+$usersLevel->company_id = $user->company_id;
+$usersLevel->branch_id = $user->branch_id;
+$usersLevel->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\UsersLevel::tableName(), $usersLevel->company_id);
+
+$usersLevel->name = \common\models\Lookup::$user_levels['1'];
+$usersLevel->display_name = \common\models\Lookup::$user_levels['1'];
+$usersLevel->parent_id = '0';
+$usersLevel->max_user = '1';
+return $usersLevel->save() ? $usersLevel : null;
+
+
+
+}
 }

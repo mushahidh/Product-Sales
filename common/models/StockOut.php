@@ -16,7 +16,7 @@ use Yii;
  * @property ProductOrder $productOrder
  * @property StockIn $stockIn
  */
-class StockOut extends \yii\db\ActiveRecord
+class StockOut extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

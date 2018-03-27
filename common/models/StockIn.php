@@ -2,7 +2,8 @@
 namespace common\models;
 
 use Yii;
-use yii\db\Query;
+use common\components\Query;
+
 
 /**
  * This is the model class for table "stock_in".
@@ -19,7 +20,7 @@ use yii\db\Query;
  * @property User $user
  * @property StockOut[] $stockOuts
  */
-class StockIn extends \yii\db\ActiveRecord
+class StockIn extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -127,6 +128,7 @@ class StockIn extends \yii\db\ActiveRecord
     }
     public static function Fullfillment($postal_code, $province, $district, $cust_name, $cust_addr, $mobile_no, $external_id, $amount, $quantity,$payment_method,$representative)
     {
+        return true; //for testing
         $curl = curl_init();
         $sku = "BEYDEY1"; 
         if (preg_match('/^10.{3}$/', $postal_code) || preg_match('/^11.{3}$/', $postal_code) || preg_match('/^12.{3}$/', $postal_code)) {
@@ -148,7 +150,7 @@ class StockIn extends \yii\db\ActiveRecord
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => '{ 	"external_id":"' . $external_id . '","order_number":"' . $external_id . '","representative":"' . $representative . '", "shipping":"' . $ship_method . '","cod_amount":"' . $amount . '","customer":{ "name":"' . $cust_name . '","address":"' . $cust_addr . '", "province":"' . $province . '", "district":"' . $district . '","postal_code":"' . $postal_code . '","mobile_no":"' . $mobile_no . '"}, 	"order_items":[{"item_sku":"' . $sku . '","item_code":"","item_qty":' . $quantity . '}]}',
             CURLOPT_HTTPHEADER => array(
-                "authorization: Basic QmV5QVBJOjZhOTZlMmUyMjQ1OWRjYjY5MDEzNmNmZTM2ZDgxYjgy",
+               // "authorization: Basic QmV5QVBJOjZhOTZlMmUyMjQ1OWRjYjY5MDEzNmNmZTM2ZDgxYjgy",
                 "cache-control: no-cache",
                 "Content-Type: application/json",
             ),
@@ -184,7 +186,7 @@ class StockIn extends \yii\db\ActiveRecord
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => array(
-                "authorization: Basic QmV5QVBJOjZhOTZlMmUyMjQ1OWRjYjY5MDEzNmNmZTM2ZDgxYjgy",
+              //  "authorization: Basic QmV5QVBJOjZhOTZlMmUyMjQ1OWRjYjY5MDEzNmNmZTM2ZDgxYjgy",
                 "cache-control: no-cache",
                 "Content-Type: application/json",
             ),

@@ -6,7 +6,7 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\User;
-use yii\db\Query;
+use common\components\Query;
 
 /**
  * UserSearch represents the model behind the search form about `common\models\User`.
@@ -98,6 +98,8 @@ class UserSearch extends User
             ->andFilterWhere(['like', 'link', $this->link])
             ->andFilterWhere(['like', 'phone_no', $this->phone_no])
             ->andFilterWhere(['like', 'address', $this->address])
+            ->andFilterWhere(['=', 'company_id', Yii::$app->user->identity->company_id])
+            ->andFilterWhere(['=', 'branch_id',Yii::$app->user->identity->branch_id])
             ->andWhere(['IS NOT','parent_id',null]);
 
         return $dataProvider;

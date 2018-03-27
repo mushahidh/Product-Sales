@@ -17,7 +17,7 @@ use Yii;
  * @property string $phone
  * @property string $email
  */
-class Customer extends \yii\db\ActiveRecord {
+class Customer extends \common\components\ActiveRecord {
 
     /**
      * @inheritdoc

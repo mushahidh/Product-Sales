@@ -34,6 +34,8 @@ AppAsset::register($this);
     <?php $this->beginContent('@app/views/layouts/topbar.php'); ?>
             <?php $this->endContent();
 }else{ ?>
+    <?php //$this->beginContent('@app/views/layouts/guesttopbar.php'); ?>
+
  <style>
                 #main-content{
                         margin-left: 0px;

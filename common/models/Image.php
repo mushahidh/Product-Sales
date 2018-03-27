@@ -13,7 +13,7 @@ use Yii;
  *
  * @property Product $product
  */
-class Image extends \yii\db\ActiveRecord
+class Image extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

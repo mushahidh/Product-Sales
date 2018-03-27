@@ -3,9 +3,16 @@
         use yii\db\Query;
    $user_id = Yii::$app->user->getId();
    $Role =   Yii::$app->authManager->getRolesByUser($user_id);
+$companyLogo = \common\models\Company::findOne(['id',Yii::$app->user->identity->company_id]);
+if($companyLogo->logo){
+$logoUrl = \yii\helpers\Url::to('@web/uploads/'.$companyLogo->logo, true);
+}else{
+$logoUrl = \yii\helpers\Url::to('@web/uploads/'.Yii::$app->user->identity->profile, true);
+
+}
 ?>
         <div class='page-topbar '>
-            <div class='logo-area'>
+            <div class='logo-area' style="background-image: url(<?=$logoUrl;?>);">
 
             </div>
             <div class='quick-area'>

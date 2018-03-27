@@ -12,7 +12,7 @@ use Yii;
  * @property string $district
  * @property string $zip
  */
-class Postcode extends \yii\db\ActiveRecord
+class Postcode extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

@@ -22,7 +22,7 @@ use Yii;
  * @property User $user
  * @property Gl[] $gls
  */
-class Account extends \yii\db\ActiveRecord
+class Account extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
@@ -81,9 +81,15 @@ class Account extends \yii\db\ActiveRecord
     {
         $action = Yii::$app->controller->action->id;
         if (parent::beforeValidate()) {
-            if ($action == 'create' || $action == 'import' ) {
-                $companyId = Yii::$app->user->identity->company_id;
-                $branchId = Yii::$app->user->identity->branch_id;
+            if ($action == 'create' ) {
+                if(Yii::$app->user->isGuest){
+                    $refferalUser = \common\models\User::findOne(['id'=>Yii::$app->request->get('id')]);
+                    $companyId = $refferalUser->company_id;
+                    $branchId = $refferalUser->branch_id;
+                }else{
+                    $companyId = Yii::$app->user->identity->company_id;
+                    $branchId = Yii::$app->user->identity->branch_id;
+              }
                 $this->id = \common\components\Constants::GUID();
                 $this->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Account::tableName(), $companyId);
                 $this->company_id = $companyId;
@@ -100,10 +106,7 @@ class Account extends \yii\db\ActiveRecord
     {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
-    public static function find()
-    {
-        return parent::find()->where(['=', 'company_id',Yii::$app->session['company_id']])->andWhere(['=','branch_id',Yii::$app->session['branch_id']]);
-    }
+
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -115,7 +118,15 @@ class Account extends \yii\db\ActiveRecord
         for($i=1;$i<=2;$i++)
         {
             $account = new Account();
-           $account->beforeValidate();
+            $action = Yii::$app->controller->action->id;
+            if($action == 'signup'){
+                $account->id = \common\components\Constants::GUID();
+                $account->company_id = $model->company_id;
+                $account->branch_id = $model->branch_id;
+                $account->sr = \common\components\Constants::nextSr(Yii::$app->db, \common\models\Account::tableName(), $account->company_id);
+            }else{
+                $account->beforeValidate();
+            }
             $account->account_type = ''.$i;
             $account->account_name =$model->username.'-receivable';    
             if($i==2)
@@ -125,7 +136,6 @@ class Account extends \yii\db\ActiveRecord
             $account->account_description = 'Account to calculate profit';
             $account->user_id = $model->id;
            $account->save();
-           
         }
         
     }

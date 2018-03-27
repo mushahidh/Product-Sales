@@ -19,7 +19,7 @@ use Yii;
  * @property Branch $branch
  * @property Company $company
  */
-class Setting extends \yii\db\ActiveRecord
+class Setting extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

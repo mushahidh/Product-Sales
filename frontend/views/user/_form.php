@@ -472,7 +472,7 @@ $('#add-button').on('click', function () {
         var product_id = $('#user-product_id').val();
         $.post("../user-product-level/getunitsprice?id=" + $('#user-quantity').val()+"&user_level="+$('#user-user_level_id').val()+"&product_id="+product_id+"&type=null&check_units="+false, function (data) {
         var json = $.parseJSON(data);
-        if($('#user-quantity').val()  * parseFloat(json.price) > 0){
+        if($('#user-quantity').val()  * parseFloat(json.price) > 0 && parseInt($('#order-orde').val()) >= parseInt($('#user-quantity').val())){
             already_in_table = false;
             for (var i = 0; i < window.db_items.clients.length; i++) {
               if(window.db_items.clients[i].product == json.pname){
@@ -495,8 +495,9 @@ $('#add-button').on('click', function () {
             $(".noproduct").show();
             $(".noproduct").html("<h5 style='text-align:center;color:red;'>You cannot purchase less than "+json.units+"</h5>");
         }
+        
         });
- 
+
     });
 
 });

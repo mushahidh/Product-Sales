@@ -12,7 +12,7 @@ use Yii;
  *
  * @property Gl[] $gls
  */
-class PaymentDetail extends \yii\db\ActiveRecord
+class PaymentDetail extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc

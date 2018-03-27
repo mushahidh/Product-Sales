@@ -27,6 +27,19 @@ body
 	color:white;
 	text-color:white;
 }
+.signup-button{
+    background: rgb(230, 185, 71);
+    color: #333;
+    padding: 11px 23px;
+    font-size: 19px;
+    line-height: 25px;
+    -webkit-border-radius: 0px;
+    border: 0px;
+    font-family: 'lato';
+    font-weight: 500;
+    text-shadow: none;
+    width: 100%;
+}
 </style>
 
 <div class="login-wrapper">
@@ -52,6 +65,8 @@ body
             <p class="submit">
                 <?= Html::submitButton('Login', ['class' => 'btn btn-primary btn-block', 'name' => 'login-button']) ?>
             </p>
+         
         <?php ActiveForm::end(); ?>
+     
     </div>
 </div>

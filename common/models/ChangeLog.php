@@ -19,7 +19,7 @@ use yii\db\Expression;
  * @property string $created_at
  * @property string $updated_at
  */
-class ChangeLog extends \yii\db\ActiveRecord
+class ChangeLog extends \common\components\ActiveRecord
 {
     /**
      * @inheritdoc
